@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: 30 58 95;      /* #1E3A5F */
+    --color-secondary: 37 99 235;   /* #2563EB */
+    --color-background: 248 250 252; /* #F8FAFC */
+    --color-card: 255 255 255;      /* #FFFFFF */
+    --color-border: 229 231 235;    /* #E5E7EB */
+    --color-heading: 17 24 39;      /* #111827 */
+    --color-text: 75 85 99;         /* #4B5563 */
+  }
+
+  html.dark {
+    --color-primary: 59 130 246;    /* #3B82F6 */
+    --color-secondary: 96 165 250;  /* #60A5FA */
+    --color-background: 15 23 42;   /* #0F172A */
+    --color-card: 30 41 59;         /* #1E293B */
+    --color-border: 51 65 85;       /* #334155 */
+    --color-heading: 248 250 252;   /* #F8FAFC */
+    --color-text: 203 213 225;      /* #CBD5E1 */
+  }
+
+  /* Typography resets for standard ERP look */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading text-heading font-semibold;
+  }
+  
+  /* Number-heavy inputs and tables can use mono for better alignment */
+  .number-font {
+    @apply font-mono;
+  }
+
+  body {
+    @apply m-0 p-0 overflow-x-hidden min-h-screen transition-colors duration-300;
+    /* Professional Corporate Glassmorphism Background */
+    background-color: #f1f5f9;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(213, 53%, 24%, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(221, 83%, 53%, 0.06) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(213, 53%, 24%, 0.04) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(41, 57%, 51%, 0.05) 0px, transparent 50%); /* Subtle accent */
+  }
+
+  /* Dark mode background */
+  html.dark body {
+    background-color: #0f172a;
+    color: #f8fafc;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(213, 53%, 44%, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(221, 83%, 63%, 0.06) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(213, 53%, 44%, 0.04) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(41, 57%, 51%, 0.05) 0px, transparent 50%);
+  }
+}
+
+@layer components {
+  /* Hide scrollbar for cleaner UI in specific components if needed */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
