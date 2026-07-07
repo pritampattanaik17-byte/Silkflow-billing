@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   // 'owner', 'employee'
+  status    String   @default("active") // 'active', 'inactive'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoices  Invoice[] @relation("InvoiceCreator")
+  returns   Return[]  @relation("ReturnProcessor")
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String   @unique
+  customerName  String
+  date          DateTime @default(now())
+  dueDate       DateTime
+  
+  items         InvoiceItem[]
+  
+  subtotal      Float
+  tax           Float
+  finalTotal    Float
+  status        String   @default("pending") // 'paid', 'pending', 'overdue'
+  
+  createdById   String
+  createdBy     User     @relation("InvoiceCreator", fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  returns       Return[]
+}
+
+model InvoiceItem {
+  id           String  @id @default(uuid())
+  invoiceId    String
+  invoice      Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  name         String
+  quantity     Int
+  mrp          Float
+  fixedPrice   Float
+  discount     Float   @default(0)
+  discountType String  @default("%") // '%', '₹'
+  total        Float
+}
+
+model Return {
+  id                String   @id @default(uuid())
+  returnNumber      String   @unique
+  originalInvoiceId String?
+  originalInvoice   Invoice? @relation(fields: [originalInvoiceId], references: [id])
+  customerName      String?
+  date              DateTime @default(now())
+  
+  items             ReturnItem[]
+  
+  refundMethod      String   // 'credit_note', 'cash', 'upi'
+  notes             String?
+  totalRefund       Float
+  
+  processedById     String
+  processedBy       User     @relation("ReturnProcessor", fields: [processedById], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model ReturnItem {
+  id         String  @id @default(uuid())
+  returnId   String
+  return     Return  @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  name       String
+  reason     String  // 'defective', 'unsold', 'wrong_item', 'other'
+  quantity   Int
+  returnRate Float
+  total      Float
+}
