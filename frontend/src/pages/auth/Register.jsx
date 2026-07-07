@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import API_BASE_URL from '../../config';
 import { Card, CardContent } from '../../components/Card';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -20,7 +21,7 @@ const Register = ({ onLogin }) => {
     // Check if an owner already exists
     const checkOwner = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/auth/check-owner');
+        const response = await fetch(`${API_BASE_URL}/auth/check-owner`);
         const data = await response.json();
         if (data.hasOwner) {
           setHasOwner(true);
@@ -39,7 +40,7 @@ const Register = ({ onLogin }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

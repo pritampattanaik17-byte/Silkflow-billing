@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_BASE_URL from '../config';
 import { Plus, Search, UserCheck, UserX, Shield, Smartphone, Mail, Lock, CheckCircle2, Calendar, X } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/Table';
@@ -19,7 +20,7 @@ const EmployeeManagement = () => {
   const fetchEmployees = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:5000/api/users');
+      const response = await fetch(`${API_BASE_URL}/users`);
       if (!response.ok) throw new Error('Failed to fetch employees');
       const data = await response.json();
       setEmployees(data);
@@ -60,7 +61,7 @@ const EmployeeManagement = () => {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
