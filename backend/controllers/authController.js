@@ -1,16 +1,19 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { loginSchema, registerSchema } from '../validators/authValidator.js';
 
 const prisma = new PrismaClient();
 
 export const login = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+    const validationResult = loginSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(err => err.message).join(', ');
+      return res.status(400).json({ message: errorMessages });
     }
+
+    const { email, password, role } = validationResult.data;
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -58,11 +61,13 @@ export const login = async (req, res) => {
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
+    const validationResult = registerSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(err => err.message).join(', ');
+      return res.status(400).json({ message: errorMessages });
     }
+
+    const { name, email, password, role } = validationResult.data;
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
