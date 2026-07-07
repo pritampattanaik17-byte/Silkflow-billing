@@ -21,10 +21,16 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'SilkFlow Backend is running' });
 });
 
-// We will import and use routes here
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Only start the server when running locally (Vercel handles this in serverless mode)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+// Export the app for Vercel serverless function
+export default app;

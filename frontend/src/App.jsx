@@ -16,9 +16,30 @@ import Reports from './pages/Reports';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 
-// Read user from localStorage synchronously to avoid redirect flash on refresh
+// Function to decode JWT and check expiration
+const isTokenValid = (token) => {
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    // Check if current time is less than expiration time
+    return payload.exp * 1000 > Date.now();
+  } catch (e) {
+    return false;
+  }
+};
+
+// Read user from localStorage synchronously and validate token
 const getStoredUser = () => {
   try {
+    const token = localStorage.getItem('token');
+    
+    // If token is expired or invalid, auto-logout
+    if (!isTokenValid(token)) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      return null;
+    }
+
     const storedUser = localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   } catch {
