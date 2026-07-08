@@ -28,7 +28,13 @@ const Login = ({ onLogin }) => {
         body: JSON.stringify({ email, password, role }),
       });
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        throw new Error('Server is unreachable. Please make sure the backend is running.');
+      }
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');

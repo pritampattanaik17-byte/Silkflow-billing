@@ -21,8 +21,13 @@ const EmployeeManagement = () => {
       setIsLoading(true);
       const response = await fetch('http://localhost:5000/api/users');
       if (!response.ok) throw new Error('Failed to fetch employees');
-      const data = await response.json();
-      setEmployees(data);
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        setEmployees(data);
+      } else {
+        throw new Error('Server returned an invalid response');
+      }
     } catch (err) {
       console.error(err);
       setError('Could not load employees');
@@ -74,8 +79,13 @@ const EmployeeManagement = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create employee');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to create employee');
+        } else {
+          throw new Error('Failed to create employee. Server returned an invalid response.');
+        }
       }
 
       setIsModalOpen(false);

@@ -21,10 +21,13 @@ const Register = ({ onLogin }) => {
     const checkOwner = async () => {
       try {
         const response = await fetch('http://localhost:5000/api/auth/check-owner');
-        const data = await response.json();
-        if (data.hasOwner) {
-          setHasOwner(true);
-          setRole('employee'); // Default to employee if owner exists
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          if (data.hasOwner) {
+            setHasOwner(true);
+            setRole('employee'); // Default to employee if owner exists
+          }
         }
       } catch (err) {
         console.error("Failed to check owner status", err);
@@ -48,7 +51,13 @@ const Register = ({ onLogin }) => {
         body: JSON.stringify({ name, email, password, role }),
       });
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        throw new Error('Server is unreachable. Please make sure the backend is running.');
+      }
 
       if (!response.ok) {
         throw new Error(data.message || 'Registration failed');
