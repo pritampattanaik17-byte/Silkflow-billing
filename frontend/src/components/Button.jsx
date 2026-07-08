@@ -24,10 +24,10 @@ const Button = React.forwardRef(({
   };
 
   const sizes = {
-    sm: 'h-8 px-3 text-sm',
-    md: 'h-10 px-4 py-2 text-sm',
-    lg: 'h-12 px-6 text-base',
-    icon: 'h-10 w-10',
+    sm: 'h-9 md:h-8 px-3 text-sm',
+    md: 'h-11 md:h-10 px-4 py-2 text-sm',
+    lg: 'h-14 md:h-12 px-6 text-base',
+    icon: 'h-11 w-11 md:h-10 md:w-10',
   };
 
   return (

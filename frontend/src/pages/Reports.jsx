@@ -37,6 +37,36 @@ const Reports = () => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount);
   };
 
+  const handleExport = () => {
+    if (!reportData || reportData.length === 0) {
+      alert("No data available to export for this date range.");
+      return;
+    }
+
+    const headers = ['Invoice Number', 'Date', 'Gross Amount (INR)'];
+    const csvData = reportData.map(row => [row.id, row.date, row.gross]);
+    
+    // Add summary row at the bottom
+    csvData.push(['', '', '']);
+    csvData.push(['TOTAL SALES', '', 300900]);
+    csvData.push(['TOTAL REFUNDS', '', 24500]);
+    csvData.push(['NET REVENUE', '', 261355]);
+
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `sales_report_${startDate}_to_${endDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header and Date Filters */}
@@ -49,28 +79,30 @@ const Reports = () => {
           <p className="text-sm text-text dark:text-white/70 mt-1">Deep dive into your wholesale performance.</p>
         </div>
         
-        <div className="flex items-center space-x-3 bg-white dark:bg-[#152842]/80 p-2 rounded-lg shadow-sm border border-border dark:border-white/10">
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-bold text-text/70 dark:text-white/50 px-2">From</span>
-            <input 
-              type="date" 
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="text-sm border-none bg-transparent focus:ring-0 text-heading dark:text-white cursor-pointer"
-            />
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <div className="flex flex-1 items-center space-x-2 bg-white dark:bg-[#152842]/80 p-2 rounded-lg shadow-sm border border-border dark:border-white/10 overflow-x-auto">
+            <div className="flex flex-col flex-1">
+              <span className="text-[10px] uppercase font-bold text-text/70 dark:text-white/50 px-2">From</span>
+              <input 
+                type="date" 
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="text-sm border-none bg-transparent focus:ring-0 text-heading dark:text-white cursor-pointer h-11 md:h-auto min-w-[120px]"
+              />
+            </div>
+            <span className="text-border dark:text-white/20">|</span>
+            <div className="flex flex-col flex-1">
+              <span className="text-[10px] uppercase font-bold text-text/70 dark:text-white/50 px-2">To</span>
+              <input 
+                type="date" 
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="text-sm border-none bg-transparent focus:ring-0 text-heading dark:text-white cursor-pointer h-11 md:h-auto min-w-[120px]"
+              />
+            </div>
           </div>
-          <span className="text-border dark:text-white/20">|</span>
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-bold text-text/70 dark:text-white/50 px-2">To</span>
-            <input 
-              type="date" 
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="text-sm border-none bg-transparent focus:ring-0 text-heading dark:text-white cursor-pointer"
-            />
-          </div>
-          <Button variant="primary" size="sm" leftIcon={Download} className="ml-2">
-            Export
+          <Button variant="primary" leftIcon={Download} className="w-full sm:w-auto" onClick={handleExport}>
+            Export CSV
           </Button>
         </div>
       </div>

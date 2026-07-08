@@ -218,7 +218,7 @@ const EmployeeManagement = () => {
           <Card className="w-full max-w-lg shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
             <button 
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full text-text/50 hover:bg-black/5 dark:hover:bg-white/10 dark:text-white/50 transition-colors"
+              className="absolute top-4 right-4 p-2.5 md:p-1.5 rounded-full text-text/50 hover:bg-black/5 dark:hover:bg-white/10 dark:text-white/50 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
