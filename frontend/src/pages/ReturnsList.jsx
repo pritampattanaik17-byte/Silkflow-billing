@@ -47,11 +47,13 @@ const ReturnsList = () => {
     }
   };
 
-  const filteredReturns = returnsList.filter(ret => 
-    ret.returnNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ret.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ret.originalInvoice?.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredReturns = returnsList.filter(ret => {
+    const returnNumMatch = (ret.returnNumber || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const customerMatch = (ret.customerName || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const invoiceMatch = (ret.originalInvoice?.invoiceNumber || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return returnNumMatch || customerMatch || invoiceMatch;
+  });
 
   return (
     <div className="space-y-6">
