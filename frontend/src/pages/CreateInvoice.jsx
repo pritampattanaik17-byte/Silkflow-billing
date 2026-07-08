@@ -223,7 +223,7 @@ const CreateInvoice = () => {
                       <button 
                         onClick={() => handleRemoveItem(item.id)}
                         disabled={items.length === 1}
-                        className="hidden md:flex ml-4 p-2 text-danger/70 hover:text-danger hover:bg-danger/10 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="flex ml-4 p-3 md:p-2 text-danger/70 hover:text-danger hover:bg-danger/10 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         title="Remove Item"
                       >
                         <Trash2 className="h-4 w-4" />

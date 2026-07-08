@@ -21,10 +21,15 @@ const Register = ({ onLogin }) => {
     const checkOwner = async () => {
       try {
         const response = await fetch('http://localhost:5000/api/auth/check-owner');
-        const data = await response.json();
-        if (data.hasOwner) {
-          setHasOwner(true);
-          setRole('employee'); // Default to employee if owner exists
+        const responseText = await response.text();
+        try {
+          const data = JSON.parse(responseText);
+          if (data.hasOwner) {
+            setHasOwner(true);
+            setRole('employee'); // Default to employee if owner exists
+          }
+        } catch (err) {
+          console.error("Failed to parse check-owner response:", err);
         }
       } catch (err) {
         console.error("Failed to check owner status", err);
@@ -48,7 +53,13 @@ const Register = ({ onLogin }) => {
         body: JSON.stringify({ name, email, password, role }),
       });
 
-      const data = await response.json();
+      let data;
+      const responseText = await response.text();
+      try {
+        data = JSON.parse(responseText);
+      } catch (err) {
+        throw new Error('Server returned an invalid response. The backend might be down or crashed.');
+      }
 
       if (!response.ok) {
         throw new Error(data.message || 'Registration failed');

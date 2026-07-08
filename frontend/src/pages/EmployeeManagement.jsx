@@ -21,8 +21,13 @@ const EmployeeManagement = () => {
       setIsLoading(true);
       const response = await fetch('http://localhost:5000/api/users');
       if (!response.ok) throw new Error('Failed to fetch employees');
-      const data = await response.json();
-      setEmployees(data);
+      const responseText = await response.text();
+      try {
+        const data = JSON.parse(responseText);
+        setEmployees(data);
+      } catch (err) {
+        throw new Error('Server returned an invalid response. The backend might be down or crashed.');
+      }
     } catch (err) {
       console.error(err);
       setError('Could not load employees');
@@ -74,8 +79,14 @@ const EmployeeManagement = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create employee');
+        const responseText = await response.text();
+        try {
+          const errorData = JSON.parse(responseText);
+          throw new Error(errorData.message || 'Failed to create employee');
+        } catch (err) {
+          if (err.message.includes('Failed to create employee')) throw err;
+          throw new Error('Failed to create employee. Server returned an invalid response.');
+        }
       }
 
       setIsModalOpen(false);
@@ -206,7 +217,7 @@ const EmployeeManagement = () => {
           <Card className="w-full max-w-lg shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
             <button 
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full text-text/50 hover:bg-black/5 dark:hover:bg-white/10 dark:text-white/50 transition-colors"
+              className="absolute top-4 right-4 p-2.5 md:p-1.5 rounded-full text-text/50 hover:bg-black/5 dark:hover:bg-white/10 dark:text-white/50 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>

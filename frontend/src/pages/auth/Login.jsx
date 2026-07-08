@@ -28,7 +28,13 @@ const Login = ({ onLogin }) => {
         body: JSON.stringify({ email, password, role }),
       });
 
-      const data = await response.json();
+      let data;
+      const responseText = await response.text();
+      try {
+        data = JSON.parse(responseText);
+      } catch (err) {
+        throw new Error('Server returned an invalid response. The backend might be down or crashed.');
+      }
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
