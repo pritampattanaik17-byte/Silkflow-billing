@@ -5,11 +5,12 @@ import { Card, CardContent } from '../../components/Card';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Select from '../../components/Select';
-import { LogIn } from 'lucide-react';
+import { LogIn, Eye, EyeOff } from 'lucide-react';
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState('owner');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,12 +30,13 @@ const Login = ({ onLogin }) => {
         body: JSON.stringify({ email, password, role }),
       });
 
+      // Safe JSON parsing — prevents crash if backend returns non-JSON (e.g. HTML error page)
       let data;
-      const responseText = await response.text();
-      try {
-        data = JSON.parse(responseText);
-      } catch (err) {
-        throw new Error('Server returned an invalid response. The backend might be down or crashed.');
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        throw new Error('Server is unreachable. Please make sure the backend is running.');
       }
 
       if (!response.ok) {
@@ -85,13 +87,23 @@ const Login = ({ onLogin }) => {
 
           <div>
             <label className="block text-sm font-medium text-heading mb-1.5">Password</label>
-            <Input 
-              type="password" 
-              placeholder="••••••••" 
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative w-full">
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                placeholder="••••••••" 
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="flex min-h-[44px] md:min-h-0 md:h-10 w-full rounded-input border border-white/50 dark:border-white/10 bg-white/40 dark:bg-black/20 backdrop-blur-sm px-3 py-2 pr-10 text-base md:text-sm text-text dark:text-white placeholder:text-text/60 dark:placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white/60 dark:focus:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-text/50 hover:text-text dark:text-white/40 dark:hover:text-white/70 transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           <div>

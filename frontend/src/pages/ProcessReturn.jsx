@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import Input from '../components/Input';
 import Select from '../components/Select';
 import Button from '../components/Button';
+import API_BASE_URL from '../config';
 
 const ProcessReturn = () => {
   const navigate = useNavigate();
@@ -14,6 +15,8 @@ const ProcessReturn = () => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [refundMethod, setRefundMethod] = useState('credit_note');
   const [notes, setNotes] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const [items, setItems] = useState([
     { id: 1, name: '', quantity: 1, returnRate: 0, reason: 'defective' }
@@ -44,6 +47,53 @@ const ProcessReturn = () => {
   const subtotal = items.reduce((sum, item) => sum + calculateItemTotal(item), 0);
   const finalTotal = subtotal; // No tax on returns for this demo unless specified
 
+  const handleSave = async () => {
+    if (items.some(item => !item.name)) {
+      setError("All return items must have a name.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) throw new Error("You must be logged in to process a return");
+      const user = JSON.parse(userStr);
+
+      const returnData = {
+        customerName: customer,
+        originalInvoiceId: origInvoice,
+        date,
+        refundMethod,
+        notes,
+        totalRefund: finalTotal,
+        processedById: user.id,
+        items: items.map(item => ({
+          ...item,
+          total: calculateItemTotal(item)
+        }))
+      };
+
+      const response = await fetch(`${API_BASE_URL}/returns`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(returnData)
+      });
+
+      const responseData = await response.json();
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Failed to process return');
+      }
+
+      navigate('/returns', { state: { successMessage: 'Return processed successfully!' } });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
       <div className="flex items-center justify-between">
@@ -56,13 +106,13 @@ const ProcessReturn = () => {
           </button>
           <h1 className="text-2xl font-bold text-heading dark:text-white">Process Return</h1>
         </div>
-        <Button variant="danger" leftIcon={RefreshCcw} onClick={() => {
-          alert('Return Processed!');
-          navigate('/returns');
-        }}>
-          Complete Return
-        </Button>
       </div>
+
+      {error && (
+        <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm flex items-center">
+          {error}
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -183,7 +233,7 @@ const ProcessReturn = () => {
                       <button 
                         onClick={() => handleRemoveItem(item.id)}
                         disabled={items.length === 1}
-                        className="flex ml-4 p-3 md:p-2 text-danger/70 hover:text-danger hover:bg-danger/10 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="hidden md:flex ml-4 p-2 text-danger/70 hover:text-danger hover:bg-danger/10 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         title="Remove Item"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -222,7 +272,7 @@ const ProcessReturn = () => {
               <div className="mt-4">
                 <label className="block text-sm font-medium text-heading dark:text-white mb-1.5">Internal Notes</label>
                 <textarea 
-                  className="w-full bg-white border border-border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-danger/50 text-text placeholder-text/50 min-h-[80px]"
+                  className="w-full bg-white border border-border rounded-lg p-3 text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-danger/50 text-text placeholder-text/50 min-h-[80px]"
                   placeholder="Reason for return..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -243,6 +293,20 @@ const ProcessReturn = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Complete Return Button */}
+      <div className="flex justify-end pt-4">
+        <Button 
+          variant="danger" 
+          size="lg"
+          leftIcon={RefreshCcw} 
+          onClick={handleSave}
+          disabled={isLoading}
+          className={isLoading ? "animate-pulse w-full md:w-1/3" : "w-full md:w-1/3 shadow-lg hover:shadow-xl transition-all"}
+        >
+          {isLoading ? 'Processing...' : 'Complete Return'}
+        </Button>
       </div>
     </div>
   );

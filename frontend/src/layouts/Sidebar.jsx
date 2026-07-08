@@ -45,7 +45,7 @@ const Sidebar = ({ user, isOpen, setIsOpen }) => {
         {/* Mobile Close Button */}
         <button 
           onClick={() => setIsOpen(false)}
-          className="md:hidden absolute top-5 right-4 p-1 text-white/50 hover:text-white transition-colors"
+          className="md:hidden absolute top-4 right-4 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-white/50 hover:text-white transition-colors"
         >
           <X className="h-6 w-6" />
         </button>
@@ -69,7 +69,7 @@ const Sidebar = ({ user, isOpen, setIsOpen }) => {
                 to={item.href}
                 onClick={() => setIsOpen(false)} // Close sidebar on mobile when navigating
                 className={({ isActive }) => cn(
-                  "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  "group flex items-center px-3 py-3 md:py-2 text-base md:text-sm font-medium rounded-md transition-colors min-h-[44px]",
                   isActive 
                     ? "bg-white/10 text-white" 
                     : "text-white/70 hover:bg-white/5 hover:text-white"

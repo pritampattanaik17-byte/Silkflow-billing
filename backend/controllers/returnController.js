@@ -9,6 +9,9 @@ export const getReturns = async (req, res) => {
       include: {
         processedBy: {
           select: { name: true }
+        },
+        originalInvoice: {
+          select: { invoiceNumber: true }
         }
       }
     });

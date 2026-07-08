@@ -5,12 +5,13 @@ import { Card, CardContent } from '../../components/Card';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Select from '../../components/Select';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Eye, EyeOff } from 'lucide-react';
 
 const Register = ({ onLogin }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState('owner');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,15 +23,13 @@ const Register = ({ onLogin }) => {
     const checkOwner = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/auth/check-owner`);
-        const responseText = await response.text();
-        try {
-          const data = JSON.parse(responseText);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
           if (data.hasOwner) {
             setHasOwner(true);
-            setRole('employee'); // Default to employee if owner exists
+            setRole('employee');
           }
-        } catch (err) {
-          console.error("Failed to parse check-owner response:", err);
         }
       } catch (err) {
         console.error("Failed to check owner status", err);
@@ -50,16 +49,16 @@ const Register = ({ onLogin }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        // Pass the user-selected role
         body: JSON.stringify({ name, email, password, role }),
       });
 
+      // Safe JSON parsing
       let data;
-      const responseText = await response.text();
-      try {
-        data = JSON.parse(responseText);
-      } catch (err) {
-        throw new Error('Server returned an invalid response. The backend might be down or crashed.');
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        throw new Error('Server is unreachable. Please make sure the backend is running.');
       }
 
       if (!response.ok) {
@@ -109,7 +108,23 @@ const Register = ({ onLogin }) => {
 
           <div>
             <label className="block text-sm font-medium text-heading mb-1.5">Password</label>
-            <Input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <div className="relative w-full">
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                placeholder="••••••••" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+                className="flex min-h-[44px] md:min-h-0 md:h-10 w-full rounded-input border border-white/50 dark:border-white/10 bg-white/40 dark:bg-black/20 backdrop-blur-sm px-3 py-2 pr-10 text-base md:text-sm text-text dark:text-white placeholder:text-text/60 dark:placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white/60 dark:focus:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-text/50 hover:text-text dark:text-white/40 dark:hover:text-white/70 transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           <div>

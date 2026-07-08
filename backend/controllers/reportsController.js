@@ -60,18 +60,44 @@ export const getReportsData = async (req, res) => {
       return `${year}-${month}-${day}`;
     };
 
-    // 5. Chart Data (Aggregate by Day)
-    const chartDataMap = {};
-    let currentDate = new Date(start);
-    while (currentDate <= end) {
-      const dayStr = getLocalDayStr(currentDate);
-      const shortDay = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
-      chartDataMap[dayStr] = {
-        day: shortDay,
-        date: dayStr,
-        sales: 0
-      };
-      currentDate.setDate(currentDate.getDate() + 1);
+    // 5. Chart Data (Aggregate by Day or Week)
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const isWeekly = diffDays > 14;
+
+    const chartDataArray = [];
+    
+    if (isWeekly) {
+      let currentDate = new Date(start);
+      while (currentDate <= end) {
+        let weekEnd = new Date(currentDate);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+        if (weekEnd > end) weekEnd = new Date(end);
+        
+        chartDataArray.push({
+          day: `${currentDate.getDate()} ${currentDate.toLocaleString('en-US', {month: 'short'})}`,
+          startDate: new Date(currentDate),
+          endDate: new Date(weekEnd),
+          sales: 0
+        });
+        currentDate.setDate(currentDate.getDate() + 7);
+      }
+    } else {
+      let currentDate = new Date(start);
+      while (currentDate <= end) {
+        const shortDay = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
+        let dayEnd = new Date(currentDate);
+        dayEnd.setHours(23, 59, 59, 999);
+        
+        chartDataArray.push({
+          day: shortDay,
+          startDate: new Date(currentDate),
+          endDate: dayEnd,
+          sales: 0
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
     }
 
     const paidInvoicesForChart = await prisma.invoice.findMany({
@@ -80,13 +106,11 @@ export const getReportsData = async (req, res) => {
     });
 
     paidInvoicesForChart.forEach(inv => {
-      const dayStr = getLocalDayStr(inv.date);
-      if (chartDataMap[dayStr]) {
-        chartDataMap[dayStr].sales += inv.finalTotal;
+      const bucket = chartDataArray.find(b => inv.date >= b.startDate && inv.date <= b.endDate);
+      if (bucket) {
+        bucket.sales += inv.finalTotal;
       }
     });
-
-    const chartDataArray = Object.values(chartDataMap);
 
     // Calculate heights for the chart (relative to max sales)
     const maxSales = Math.max(...chartDataArray.map(d => d.sales), 1); // avoid division by zero

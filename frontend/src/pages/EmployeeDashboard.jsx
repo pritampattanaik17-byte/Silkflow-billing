@@ -6,6 +6,7 @@ import { FileText, Plus, Users, Package, RefreshCcw, IndianRupee, TrendingUp, Ch
 import Button from '../components/Button';
 import Select from '../components/Select';
 import { useNavigate, useLocation } from 'react-router-dom';
+import API_BASE_URL from '../config';
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -13,35 +14,54 @@ const EmployeeDashboard = () => {
   const location = useLocation();
   const [successMessage, setSuccessMessage] = useState(location.state?.successMessage || '');
 
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    revenueChange: 0,
+    totalRefund: 0,
+    refundChange: 0,
+    recentTransactions: []
+  });
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     if (successMessage) {
-      // Clear the state so it doesn't show again on refresh
       window.history.replaceState({}, document.title);
-      // Auto-hide after 5 seconds
       const timer = setTimeout(() => setSuccessMessage(''), 5000);
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
 
-  // In a real app, this would fetch data based on the selected date
-  const billingTotals = {
-    today: '₹24,500',
-    week: '₹1,45,200',
-    month: '₹4,80,000'
-  };
+  useEffect(() => {
+    const fetchEmployeeStats = async () => {
+      try {
+        setLoading(true);
+        const storedUser = localStorage.getItem('user');
+        const user = storedUser ? JSON.parse(storedUser) : null;
+        
+        let queryParams = billingFilter ? `?date=${billingFilter}` : '';
+        if (user && user.id) {
+          queryParams += queryParams ? `&employeeId=${user.id}` : `?employeeId=${user.id}`;
+        }
 
-  const returnTotals = {
-    today: '₹1,200',
-    week: '₹5,400',
-    month: '₹18,500'
-  };
-
-  const recentInvoices = [
-    { id: 'INV-2023-006', customer: 'Sari Sansar', date: 'Today, 10:45 AM', amount: '₹88,000', status: 'pending' },
-    { id: 'INV-2023-007', customer: 'Priya Creations', date: 'Today, 09:12 AM', amount: '₹12,400', status: 'paid' },
-    { id: 'INV-2023-008', customer: 'Shree Silk Palace', date: 'Yesterday', amount: '₹45,000', status: 'paid' },
-    { id: 'INV-2023-009', customer: 'Kanjivaram House', date: 'Yesterday', amount: '₹1,20,000', status: 'pending' },
-  ];
+        const response = await fetch(`${API_BASE_URL}/dashboard${queryParams}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        if (!response.ok) throw new Error('Failed to fetch stats');
+        const data = await response.json();
+        setStats(data);
+      } catch (error) {
+        console.error('Error fetching employee dashboard stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchEmployeeStats();
+  }, [billingFilter]);
 
   return (
     <div className="space-y-6">
@@ -50,8 +70,8 @@ const EmployeeDashboard = () => {
           <h1 className="text-2xl font-bold text-heading dark:text-white">Employee Dashboard</h1>
           <p className="text-sm text-text dark:text-white/70 mt-1">Manage your billing and day-to-day operations.</p>
         </div>
-        <div className="mt-4 sm:mt-0">
-          <Button variant="primary" leftIcon={Plus} onClick={() => navigate('/invoices/new')}>
+        <div className="mt-4 sm:mt-0 w-full sm:w-auto">
+          <Button className="w-full sm:w-auto" variant="primary" leftIcon={Plus} onClick={() => navigate('/invoices/new')}>
             Quick Bill
           </Button>
         </div>
@@ -68,14 +88,14 @@ const EmployeeDashboard = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-t-4 border-t-primary bg-gradient-to-br from-white to-primary/5 dark:from-white/5 dark:to-primary/10 relative overflow-hidden group hover:shadow-md transition-shadow">
+        <Card className="border-t-4 border-t-primary bg-gradient-to-br from-white to-primary/5 dark:from-white/5 dark:to-primary/10 relative overflow-hidden group hover:shadow-md transition-all sticky top-0 z-10 md:static md:top-auto md:z-auto">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
             <CardTitle className="text-sm font-semibold text-text dark:text-white/70 uppercase tracking-wider">My Total Billing</CardTitle>
             <input 
               type="date"
               value={billingFilter}
               onChange={(e) => setBillingFilter(e.target.value)}
-              className="h-8 text-xs py-1 px-2 bg-white/80 dark:bg-black/20 backdrop-blur-sm border border-white/60 dark:border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-text dark:text-white font-medium cursor-pointer"
+              className="h-11 md:h-8 text-base md:text-xs py-1 px-3 md:px-2 bg-white/80 dark:bg-black/20 backdrop-blur-sm border border-white/60 dark:border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-text dark:text-white font-medium cursor-pointer"
             />
           </CardHeader>
           <CardContent className="relative z-10">
@@ -85,24 +105,25 @@ const EmployeeDashboard = () => {
               </div>
               <div>
                 <div className="text-3xl font-bold text-heading dark:text-white number-font">
-                  ₹24,500 {/* Dummy static value since date is dynamic */}
+                  {loading ? '...' : `₹${stats.totalRevenue.toLocaleString('en-IN')}`}
                 </div>
-                <p className="text-xs font-semibold text-emerald-600 mt-1 flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-1" /> +8.4% from previous period
+                <p className={`text-xs font-semibold mt-1 flex items-center ${Number(stats.revenueChange) >= 0 ? 'text-emerald-600' : 'text-danger/80'}`}>
+                  {Number(stats.revenueChange) >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingUp className="w-3 h-3 mr-1 rotate-180" />}
+                  {Number(stats.revenueChange) > 0 ? '+' : ''}{stats.revenueChange}% from previous period
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-t-4 border-t-danger bg-gradient-to-br from-white to-danger/5 dark:from-white/5 dark:to-danger/10 relative overflow-hidden group hover:shadow-md transition-shadow">
+        <Card className="border-t-4 border-t-danger bg-gradient-to-br from-white to-danger/5 dark:from-white/5 dark:to-danger/10 relative overflow-hidden group hover:shadow-md transition-all sticky top-4 z-20 md:static md:top-auto md:z-auto shadow-md md:shadow-none">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
             <CardTitle className="text-sm font-semibold text-text dark:text-white/70 uppercase tracking-wider">Total Return Money</CardTitle>
             <input 
               type="date"
               value={billingFilter}
               onChange={(e) => setBillingFilter(e.target.value)}
-              className="h-8 text-xs py-1 px-2 bg-white/80 dark:bg-black/20 backdrop-blur-sm border border-white/60 dark:border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-danger/50 text-text dark:text-white font-medium cursor-pointer"
+              className="h-11 md:h-8 text-base md:text-xs py-1 px-3 md:px-2 bg-white/80 dark:bg-black/20 backdrop-blur-sm border border-white/60 dark:border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-danger/50 text-text dark:text-white font-medium cursor-pointer"
             />
           </CardHeader>
           <CardContent className="relative z-10">
@@ -112,10 +133,11 @@ const EmployeeDashboard = () => {
               </div>
               <div>
                 <div className="text-3xl font-bold text-heading dark:text-white number-font">
-                  ₹1,200 {/* Dummy static value since date is dynamic */}
+                  {loading ? '...' : `₹${stats.totalRefund.toLocaleString('en-IN')}`}
                 </div>
-                <p className="text-xs font-semibold text-danger/80 mt-1">
-                  Processed 4 returns
+                <p className={`text-xs font-semibold mt-1 flex items-center ${Number(stats.refundChange) <= 0 ? 'text-emerald-600' : 'text-danger/80'}`}>
+                  {Number(stats.refundChange) <= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingUp className="w-3 h-3 mr-1 rotate-180" />}
+                  {Number(stats.refundChange) > 0 ? '+' : ''}{stats.refundChange}% from previous period
                 </p>
               </div>
             </div>
@@ -126,13 +148,13 @@ const EmployeeDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>My Recent Bills</CardTitle>
+            <CardTitle>My Recent Transactions</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Invoice #</TableHead>
+                  <TableHead>ID</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Time</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
@@ -140,17 +162,31 @@ const EmployeeDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentInvoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell className="font-medium number-font text-primary dark:text-white">{invoice.id}</TableCell>
-                    <TableCell>{invoice.customer}</TableCell>
-                    <TableCell className="number-font text-text dark:text-white/70 text-sm">{invoice.date}</TableCell>
-                    <TableCell className="text-right number-font font-medium">{invoice.amount}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={invoice.status} />
-                    </TableCell>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-4">Loading...</TableCell>
                   </TableRow>
-                ))}
+                ) : stats.recentTransactions && stats.recentTransactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-4 text-text dark:text-white/70">No recent transactions found.</TableCell>
+                  </TableRow>
+                ) : (
+                  stats.recentTransactions && stats.recentTransactions.map((tx) => (
+                    <TableRow key={tx.id}>
+                      <TableCell className="font-medium number-font text-primary dark:text-white">{tx.id}</TableCell>
+                      <TableCell>{tx.customer}</TableCell>
+                      <TableCell className="number-font text-text dark:text-white/70 text-sm">{tx.date}</TableCell>
+                      <TableCell className="text-right number-font font-medium">
+                        <span className={tx.type === 'return' ? 'text-danger' : 'text-emerald-600'}>
+                          {tx.type === 'return' ? '-' : ''}{tx.amount}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={tx.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>

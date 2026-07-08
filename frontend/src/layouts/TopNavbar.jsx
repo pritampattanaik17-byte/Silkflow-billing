@@ -23,7 +23,7 @@ const TopNavbar = ({ user, onLogout, onMenuClick }) => {
       <button
         type="button"
         onClick={onMenuClick}
-        className="px-4 border-r border-border text-text/50 dark:text-white/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary md:hidden"
+        className="px-4 border-r border-border text-text/50 dark:text-white/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center"
       >
         <span className="sr-only">Open sidebar</span>
         <Menu className="h-6 w-6" aria-hidden="true" />
@@ -33,7 +33,7 @@ const TopNavbar = ({ user, onLogout, onMenuClick }) => {
           {/* Global search removed as per user request */}
         </div>
         <div className="ml-4 flex items-center md:ml-6 space-x-2 md:space-x-4">
-          <button className="p-2 rounded-full text-text dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors">
+          <button className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-text dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors">
             <span className="sr-only">View notifications</span>
             <Bell className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -47,7 +47,7 @@ const TopNavbar = ({ user, onLogout, onMenuClick }) => {
                 <div className="absolute -inset-[2px] rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 animate-[spin_3s_linear_infinite]"></div>
                 
                 {/* Avatar */}
-                <div className="relative h-8 w-8 bg-white dark:bg-[#152842] rounded-full flex items-center justify-center text-primary dark:text-white font-bold z-10">
+                <div className="relative h-10 w-10 bg-white dark:bg-[#152842] rounded-full flex items-center justify-center text-primary dark:text-white font-bold z-10">
                   {getInitials(user?.name)}
                 </div>
               </button>

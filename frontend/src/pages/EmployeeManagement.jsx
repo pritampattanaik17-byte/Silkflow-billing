@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import API_BASE_URL from '../config';
 import { Plus, Search, UserCheck, UserX, Shield, Smartphone, Mail, Lock, CheckCircle2, Calendar, X } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/Table';
@@ -20,15 +19,10 @@ const EmployeeManagement = () => {
   const fetchEmployees = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/users`);
+      const response = await fetch('http://localhost:5000/api/users');
       if (!response.ok) throw new Error('Failed to fetch employees');
-      const responseText = await response.text();
-      try {
-        const data = JSON.parse(responseText);
-        setEmployees(data);
-      } catch (err) {
-        throw new Error('Server returned an invalid response. The backend might be down or crashed.');
-      }
+      const data = await response.json();
+      setEmployees(data);
     } catch (err) {
       console.error(err);
       setError('Could not load employees');
@@ -66,7 +60,7 @@ const EmployeeManagement = () => {
     e.preventDefault();
     
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,14 +74,8 @@ const EmployeeManagement = () => {
       });
 
       if (!response.ok) {
-        const responseText = await response.text();
-        try {
-          const errorData = JSON.parse(responseText);
-          throw new Error(errorData.message || 'Failed to create employee');
-        } catch (err) {
-          if (err.message.includes('Failed to create employee')) throw err;
-          throw new Error('Failed to create employee. Server returned an invalid response.');
-        }
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create employee');
       }
 
       setIsModalOpen(false);
@@ -112,11 +100,6 @@ const EmployeeManagement = () => {
         <div>
           <h1 className="text-2xl font-bold text-heading dark:text-white">Employee Management</h1>
           <p className="text-sm text-text dark:text-white/70 mt-1">Create accounts and manage your staff access.</p>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <Button variant="primary" leftIcon={Plus} onClick={() => setIsModalOpen(true)}>
-            Add Employee
-          </Button>
         </div>
       </div>
 
@@ -218,7 +201,7 @@ const EmployeeManagement = () => {
           <Card className="w-full max-w-lg shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
             <button 
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 p-2.5 md:p-1.5 rounded-full text-text/50 hover:bg-black/5 dark:hover:bg-white/10 dark:text-white/50 transition-colors"
+              className="absolute top-4 right-4 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-text/50 hover:bg-black/5 dark:hover:bg-white/10 dark:text-white/50 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -320,11 +303,11 @@ const EmployeeManagement = () => {
                 </div>
 
               </CardContent>
-              <div className="p-5 border-t border-border dark:border-white/10 flex justify-end space-x-3 bg-gray-50/50 dark:bg-black/20 rounded-b-xl">
-                <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)}>
+              <div className="p-5 border-t border-border dark:border-white/10 flex flex-col sm:flex-row justify-end gap-3 sm:space-x-3 sm:gap-0 bg-gray-50/50 dark:bg-black/20 rounded-b-xl">
+                <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)} className="w-full sm:w-auto justify-center">
                   Cancel
                 </Button>
-                <Button variant="primary" type="submit">
+                <Button variant="primary" type="submit" className="w-full sm:w-auto justify-center">
                   Create Employee
                 </Button>
               </div>

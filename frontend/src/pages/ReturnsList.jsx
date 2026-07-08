@@ -1,27 +1,56 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, RefreshCcw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Plus, Search, Filter, RefreshCcw, Loader2 } from 'lucide-react';
 import Button from '../components/Button';
 import SearchBox from '../components/SearchBox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/Table';
 import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
+import API_BASE_URL from '../config';
 
 const ReturnsList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+  const [returnsList, setReturnsList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState(location.state?.successMessage || '');
 
-  // Dummy returns data
-  const returns = [
-    { id: 'RET-001', origInvoice: 'INV-2023-006', customer: 'Sari Sansar', date: '2023-10-24', amount: '₹12,400', method: 'Credit Note', status: 'completed' },
-    { id: 'RET-002', origInvoice: 'INV-2023-002', customer: 'Priya Creations', date: '2023-10-23', amount: '₹4,500', method: 'Cash', status: 'completed' },
-    { id: 'RET-003', origInvoice: 'INV-2023-009', customer: 'Kanjivaram House', date: '2023-10-20', amount: '₹18,000', method: 'UPI', status: 'pending' },
-  ];
+  useEffect(() => {
+    fetchReturns();
+    
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(''), 5000);
+      window.history.replaceState({}, document.title);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
-  const filteredReturns = returns.filter(ret => 
-    ret.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ret.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ret.origInvoice.toLowerCase().includes(searchTerm.toLowerCase())
+  const fetchReturns = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/returns?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch returns');
+      const data = await response.json();
+      setReturnsList(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredReturns = returnsList.filter(ret => 
+    ret.returnNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ret.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ret.originalInvoice?.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -31,12 +60,24 @@ const ReturnsList = () => {
           <h1 className="text-2xl font-bold text-heading dark:text-white">Returns & Credit Notes</h1>
           <p className="text-sm text-text dark:text-white/70 mt-1">Manage sales returns and refunds.</p>
         </div>
-        <div className="mt-4 sm:mt-0">
-          <Button variant="danger" leftIcon={Plus} onClick={() => navigate('/returns/new')}>
+        <div className="mt-4 sm:mt-0 w-full sm:w-auto">
+          <Button variant="danger" leftIcon={Plus} onClick={() => navigate('/returns/new')} className="w-full sm:w-auto justify-center">
             Process Return
           </Button>
         </div>
       </div>
+
+      {successMessage && (
+        <div className="p-4 bg-green-500/10 border border-green-500/50 rounded-lg text-green-500 text-sm font-medium">
+          {successMessage}
+        </div>
+      )}
+      
+      {error && (
+        <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm font-medium">
+          {error}
+        </div>
+      )}
 
       <div className="bg-white dark:bg-[#152842]/80 backdrop-blur-2xl rounded-lg shadow-sm border border-border dark:border-white/10 p-4 transition-colors">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -53,7 +94,12 @@ const ReturnsList = () => {
           </Button>
         </div>
 
-        {filteredReturns.length > 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
+            <p className="text-text dark:text-white/70">Loading returns...</p>
+          </div>
+        ) : filteredReturns.length > 0 ? (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -70,18 +116,18 @@ const ReturnsList = () => {
               <TableBody>
                 {filteredReturns.map((ret) => (
                   <TableRow key={ret.id}>
-                    <TableCell className="font-medium number-font text-danger">{ret.id}</TableCell>
-                    <TableCell className="number-font text-primary dark:text-white">{ret.origInvoice}</TableCell>
-                    <TableCell className="dark:text-white/90">{ret.customer}</TableCell>
-                    <TableCell className="number-font text-text dark:text-white/70 text-sm">{ret.date}</TableCell>
+                    <TableCell className="font-medium number-font text-danger">{ret.returnNumber}</TableCell>
+                    <TableCell className="number-font text-primary dark:text-white">{ret.originalInvoice?.invoiceNumber || 'N/A'}</TableCell>
+                    <TableCell className="dark:text-white/90">{ret.customerName || 'N/A'}</TableCell>
+                    <TableCell className="number-font text-text dark:text-white/70 text-sm">{new Date(ret.date).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-secondary/10 text-secondary">
-                        {ret.method}
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-secondary/10 text-secondary capitalize">
+                        {ret.refundMethod?.replace('_', ' ')}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right number-font font-medium text-danger">{ret.amount}</TableCell>
+                    <TableCell className="text-right number-font font-medium text-danger">₹{ret.totalRefund?.toFixed(2) || '0.00'}</TableCell>
                     <TableCell>
-                      <StatusBadge status={ret.status === 'completed' ? 'paid' : 'pending'} />
+                      <StatusBadge status="paid" />
                     </TableCell>
                   </TableRow>
                 ))}

@@ -11,7 +11,7 @@ const AppLayout = ({ user, onLogout }) => {
       <Sidebar user={user} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className="flex flex-col flex-1 w-0 overflow-hidden md:pl-64">
         <TopNavbar user={user} onLogout={onLogout} onMenuClick={() => setIsSidebarOpen(true)} />
-        <main className="flex-1 relative overflow-y-auto focus:outline-none p-6">
+        <main className="flex-1 relative overflow-y-auto focus:outline-none p-4 md:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>

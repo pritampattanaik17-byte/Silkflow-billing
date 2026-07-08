@@ -4,6 +4,10 @@ import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import invoiceRoutes from './routes/invoiceRoutes.js';
+import returnRoutes from './routes/returnRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
+import reportsRoutes from './routes/reportsRoutes.js';
 
 dotenv.config();
 
@@ -24,6 +28,10 @@ app.get('/api/health', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/returns', returnRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Only start the server when running locally (Vercel handles this in serverless mode)
 if (process.env.NODE_ENV !== 'production') {
