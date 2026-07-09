@@ -4,10 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "cd backend && npm install && npx prisma generate && cd ../frontend && npm install",
-    "build": "cd frontend && npm run build"
-  },
-  "devDependencies": {
-    "vite": "^5.0.0"
+    "postinstall": "cd backend && npm install && npx prisma generate"
   }
 }
