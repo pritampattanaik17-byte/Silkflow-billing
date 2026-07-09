@@ -14,6 +14,8 @@ export default defineConfig({
         }
       }
     },
-    chunkSizeWarningLimit: 1000 // Increases the warning limit to 1000 kB
+    outDir: '../dist',
+    emptyOutDir: true,
+    chunkSizeWarningLimit: 1000
   }
 })
