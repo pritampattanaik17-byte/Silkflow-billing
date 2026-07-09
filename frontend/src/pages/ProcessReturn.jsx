@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import Input from '../components/Input';
 import Select from '../components/Select';
 import Button from '../components/Button';
-import API_BASE_URL from '../config';
+import { authFetch } from '../authFetch';
 
 const ProcessReturn = () => {
   const navigate = useNavigate();
@@ -68,16 +68,14 @@ const ProcessReturn = () => {
         refundMethod,
         notes,
         totalRefund: finalTotal,
-        processedById: user.id,
         items: items.map(item => ({
           ...item,
           total: calculateItemTotal(item)
         }))
       };
 
-      const response = await fetch(`${API_BASE_URL}/returns`, {
+      const response = await authFetch('/returns', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(returnData)
       });
 

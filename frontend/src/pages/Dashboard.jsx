@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/Table';
 import StatusBadge from '../components/StatusBadge';
 import { ArrowUpRight, ArrowDownRight, IndianRupee, Users, Package, RefreshCcw, TrendingUp, CheckCircle2 } from 'lucide-react';
-import API_BASE_URL from '../config';
+import { authFetch } from '../authFetch';
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip as RechartsTooltip, Cell } from 'recharts';
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -53,7 +53,7 @@ const Dashboard = () => {
       try {
         setLoading(true);
         const queryParams = dateFilter ? `?date=${dateFilter}&t=${Date.now()}` : `?t=${Date.now()}`;
-        const response = await fetch(`${API_BASE_URL}/dashboard${queryParams}`, {
+        const response = await authFetch(`/dashboard${queryParams}`, {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache',

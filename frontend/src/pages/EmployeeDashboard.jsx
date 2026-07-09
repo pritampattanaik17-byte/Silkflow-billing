@@ -6,7 +6,7 @@ import { FileText, Plus, Users, Package, RefreshCcw, IndianRupee, TrendingUp, Ch
 import Button from '../components/Button';
 import Select from '../components/Select';
 import { useNavigate, useLocation } from 'react-router-dom';
-import API_BASE_URL from '../config';
+import { authFetch } from '../authFetch';
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ const EmployeeDashboard = () => {
           queryParams += queryParams ? `&employeeId=${user.id}` : `?employeeId=${user.id}`;
         }
 
-        const response = await fetch(`${API_BASE_URL}/dashboard${queryParams}`, {
+        const response = await authFetch(`/dashboard${queryParams}`, {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache',

@@ -3,7 +3,7 @@ import { BarChart3, TrendingUp, IndianRupee, RefreshCcw, FileText, Download } fr
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/Table';
 import Button from '../components/Button';
-import API_BASE_URL from '../config';
+import { authFetch } from '../authFetch';
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip as RechartsTooltip, Cell } from 'recharts';
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -44,7 +44,7 @@ const Reports = () => {
       try {
         setLoading(true);
         const queryParams = `?startDate=${startDate}&endDate=${endDate}&t=${Date.now()}`;
-        const response = await fetch(`${API_BASE_URL}/reports${queryParams}`, {
+        const response = await authFetch(`/reports${queryParams}`, {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache',

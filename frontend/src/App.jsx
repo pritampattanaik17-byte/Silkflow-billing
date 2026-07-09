@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { isTokenExpired } from './authFetch';
 import AppLayout from './layouts/AppLayout';
 import AuthLayout from './layouts/AuthLayout';
 import Dashboard from './pages/Dashboard';
@@ -20,7 +21,16 @@ import Register from './pages/auth/Register';
 const getStoredUser = () => {
   try {
     const storedUser = localStorage.getItem('user');
-    return storedUser ? JSON.parse(storedUser) : null;
+    if (!storedUser) return null;
+
+    // Check if the JWT token is expired
+    if (isTokenExpired()) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      return null;
+    }
+
+    return JSON.parse(storedUser);
   } catch {
     return null;
   }
@@ -29,6 +39,17 @@ const getStoredUser = () => {
 function App() {
   const [user, setUser] = useState(getStoredUser);
   const navigate = useNavigate();
+
+  // Periodically check token expiry (every 60 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (user && isTokenExpired()) {
+        handleLogout();
+      }
+    }, 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -45,7 +66,13 @@ function App() {
 
   // Protected Route Wrapper
   const ProtectedRoute = ({ children }) => {
-    if (!user) {
+    if (!user || isTokenExpired()) {
+      // Clean up stale auth state
+      if (user) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        setUser(null);
+      }
       return <Navigate to="/login" replace />;
     }
     return children;

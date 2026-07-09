@@ -7,7 +7,7 @@ import SearchBox from '../components/SearchBox';
 import Button from '../components/Button';
 import { Filter, Download, Plus, Trash2, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import API_BASE_URL from '../config';
+import { authFetch } from '../authFetch';
 
 const Invoices = () => {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ const Invoices = () => {
   const fetchInvoices = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/invoices?t=${Date.now()}`, {
+      const response = await authFetch(`/invoices?t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache',
@@ -56,7 +56,7 @@ const Invoices = () => {
     try {
       setDeletingId(invoice.id);
       setError('');
-      const response = await fetch(`${API_BASE_URL}/invoices/${invoice.id}`, {
+      const response = await authFetch(`/invoices/${invoice.id}`, {
         method: 'DELETE'
       });
 

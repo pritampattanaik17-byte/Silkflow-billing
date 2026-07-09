@@ -7,7 +7,7 @@ import SearchBox from '../components/SearchBox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/Table';
 import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
-import API_BASE_URL from '../config';
+import { authFetch } from '../authFetch';
 
 const ReturnsList = () => {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ const ReturnsList = () => {
   const fetchReturns = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/returns?t=${Date.now()}`, {
+      const response = await authFetch(`/returns?t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache',

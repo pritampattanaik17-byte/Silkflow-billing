@@ -120,25 +120,6 @@ const Login = ({ onLogin }) => {
           </div>
 
 
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary/50"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-text">
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <a href="#" className="font-medium text-primary hover:text-primary/80">
-                Forgot your password?
-              </a>
-            </div>
-          </div>
 
           <Button type="submit" variant="primary" className="w-full mt-6" leftIcon={LogIn} disabled={isLoading}>
             {isLoading ? 'Signing in...' : 'Sign in'}

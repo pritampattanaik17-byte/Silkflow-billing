@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API_BASE_URL from '../config';
+import { authFetch } from '../authFetch';
 import { ArrowLeft, Plus, Trash2, Save, Loader2, Printer } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import Input from '../components/Input';
@@ -103,12 +103,10 @@ const CreateInvoice = () => {
         subtotal,
         tax: calculatedTax,
         finalTotal,
-        createdById: user.id
       };
 
-      const response = await fetch(`${API_BASE_URL}/invoices`, {
+      const response = await authFetch('/invoices', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(invoiceData)
       });
 
