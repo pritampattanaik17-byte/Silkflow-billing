@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "cd backend && npm install && npx prisma generate"
+    "postinstall": "cd backend && npm install && npx prisma generate",
+    "build": "cd frontend && npm install && npm run build"
   }
 }
