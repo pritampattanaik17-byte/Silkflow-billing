@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma.js';
 
 /**
  * Generate a sequential, collision-proof invoice number.
@@ -70,9 +68,12 @@ const generateInvoiceNumber = async () => {
 
 export const createInvoice = async (req, res) => {
   try {
-    const { customerName, date, dueDate, items, subtotal, tax, finalTotal, createdById } = req.body;
+    const { customerName, date, dueDate, items, subtotal, tax, finalTotal } = req.body;
 
-    if (!customerName || !items || items.length === 0 || !createdById) {
+    // User identity comes from the verified JWT token, not the request body
+    const createdById = req.user.id;
+
+    if (!customerName || !items || items.length === 0) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 

@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { loginSchema, registerSchema } from '../validators/authValidator.js';
-
-const prisma = new PrismaClient();
 
 export const login = async (req, res) => {
   try {
@@ -39,7 +37,7 @@ export const login = async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, role: user.role },
-      process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
+      process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
@@ -77,7 +75,7 @@ export const register = async (req, res) => {
       return res.status(409).json({ message: 'Email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
     const userRole = role === 'owner' || role === 'employee' ? role : 'employee';
 
     if (userRole === 'owner') {
@@ -100,7 +98,7 @@ export const register = async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, role: user.role },
-      process.env.JWT_SECRET || 'supersecretkey_change_me_in_production',
+      process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 

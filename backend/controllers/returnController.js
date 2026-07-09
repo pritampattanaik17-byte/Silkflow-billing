@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma.js';
 
 export const getReturns = async (req, res) => {
   try {
@@ -31,13 +29,11 @@ export const createReturn = async (req, res) => {
       refundMethod,
       notes,
       items,
-      totalRefund,
-      processedById
+      totalRefund
     } = req.body;
 
-    if (!processedById) {
-      return res.status(400).json({ message: 'processedById is required' });
-    }
+    // User identity comes from the verified JWT token, not the request body
+    const processedById = req.user.id;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: 'Return must have at least one item' });
