@@ -52,6 +52,25 @@ export default {
         // Actually, the user's spacing 4, 8, 12, 16 etc. maps directly to standard Tailwind spacing multiplied by 4px. 
         // Tailwind default: 1 = 0.25rem (4px). 2 = 8px, 3 = 12px, 4 = 16px. 
         // I will keep default Tailwind spacing but use the specific numbers (1, 2, 3, 4, 5, 6, 8, 10, 12) which correspond to 4px, 8px, 12px, 16px, 20px, 24px, 32px, 40px, 48px.
+      },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-in-right': {
+          '0%': { opacity: '0', transform: 'translateX(-10px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        }
+      },
+      animation: {
+        'fade-in': 'fade-in 0.3s ease-out forwards',
+        'fade-in-up': 'fade-in-up 0.4s ease-out forwards',
+        'fade-in-right': 'fade-in-right 0.4s ease-out forwards',
       }
     },
   },

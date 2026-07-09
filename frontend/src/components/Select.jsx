@@ -6,15 +6,15 @@ const Select = React.forwardRef(({ className, options, error, ...props }, ref) =
     <div className="w-full">
       <select
         className={cn(
-          "flex h-10 w-full rounded-input border border-white/50 bg-white/40 backdrop-blur-sm px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white/60 disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm",
-          error && "border-danger focus:ring-danger/50",
+          "flex min-h-[44px] md:min-h-0 md:h-10 w-full rounded-input border border-border/80 hover:border-border dark:border-white/10 dark:hover:border-white/20 bg-white/70 dark:bg-black/20 backdrop-blur-sm px-3 py-2 text-base md:text-sm text-text dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-white dark:focus:bg-white/10 focus:shadow-md disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 shadow-sm",
+          error && "border-danger dark:border-danger/50 focus:ring-danger/50",
           className
         )}
         ref={ref}
         {...props}
       >
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <option key={opt.value} value={opt.value} className="bg-white dark:bg-[#1E293B] text-text dark:text-white">
             {opt.label}
           </option>
         ))}

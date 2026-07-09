@@ -4,7 +4,7 @@ import { cn } from '../utils/cn';
 export const Card = React.forwardRef(({ className, children, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('bg-white/70 dark:bg-[#152842]/80 backdrop-blur-2xl border border-white/50 dark:border-white/10 shadow-[0_4px_24px_0_rgba(17,24,39,0.05)] dark:shadow-[0_4px_24px_0_rgba(0,0,0,0.2)] rounded-2xl transition-colors', className)}
+    className={cn('bg-white/70 dark:bg-[#152842]/80 backdrop-blur-2xl border border-white/50 dark:border-white/10 shadow-[0_4px_24px_0_rgba(17,24,39,0.05)] dark:shadow-[0_4px_24px_0_rgba(0,0,0,0.2)] rounded-2xl transition-all duration-300', className)}
     {...props}
   >
     {children}

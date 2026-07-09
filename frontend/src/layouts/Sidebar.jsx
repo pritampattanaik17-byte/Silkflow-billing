@@ -69,9 +69,9 @@ const Sidebar = ({ user, isOpen, setIsOpen }) => {
                 to={item.href}
                 onClick={() => setIsOpen(false)} // Close sidebar on mobile when navigating
                 className={({ isActive }) => cn(
-                  "group flex items-center px-3 py-3 md:py-2 text-base md:text-sm font-medium rounded-md transition-colors min-h-[44px]",
+                  "group flex items-center px-3 py-3 md:py-2 text-base md:text-sm font-medium rounded-md transition-all duration-200 hover:translate-x-1 min-h-[44px]",
                   isActive 
-                    ? "bg-white/10 text-white" 
+                    ? "bg-white/10 text-white translate-x-1" 
                     : "text-white/70 hover:bg-white/5 hover:text-white"
                 )}
               >

@@ -108,7 +108,7 @@ const Reports = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12 animate-fade-in-up">
       {/* Header and Date Filters */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -119,31 +119,39 @@ const Reports = () => {
           <p className="text-sm text-text dark:text-white/70 mt-1">Deep dive into your wholesale performance.</p>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:space-x-3 bg-white dark:bg-[#152842]/80 p-3 sm:p-2 rounded-lg shadow-sm border border-border dark:border-white/10 w-full sm:w-auto">
-          <div className="flex items-center justify-between sm:justify-start flex-1 sm:flex-none">
-            <div className="flex flex-col flex-1">
-              <span className="text-[10px] uppercase font-bold text-text/70 dark:text-white/50 px-2">From</span>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-white dark:bg-[#152842]/80 p-1.5 rounded-lg shadow-sm border border-border dark:border-white/10 w-full sm:w-auto">
+          <div className="flex items-center justify-between sm:justify-start px-2 sm:px-3 pt-1 sm:pt-0">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold text-text/70 dark:text-white/50 tracking-wider mb-0.5">From</span>
               <input 
                 type="date" 
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="min-h-[44px] md:min-h-0 text-base md:text-sm border-none bg-transparent focus:ring-0 text-heading dark:text-white cursor-pointer w-full"
+                className="h-8 text-base md:text-sm border-none bg-transparent p-0 pr-1 focus:ring-0 text-heading dark:text-white cursor-pointer w-[130px] sm:w-[135px]"
               />
             </div>
-            <span className="text-border dark:text-white/20 px-2">|</span>
-            <div className="flex flex-col flex-1">
-              <span className="text-[10px] uppercase font-bold text-text/70 dark:text-white/50 px-2">To</span>
+          </div>
+          
+          <div className="hidden sm:block w-px h-10 bg-border dark:bg-white/10 mx-1"></div>
+          <div className="block sm:hidden h-px w-full bg-border dark:bg-white/10 my-2"></div>
+          
+          <div className="flex items-center justify-between sm:justify-start px-2 sm:px-3 pb-1 sm:pb-0">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold text-text/70 dark:text-white/50 tracking-wider mb-0.5">To</span>
               <input 
                 type="date" 
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="min-h-[44px] md:min-h-0 text-base md:text-sm border-none bg-transparent focus:ring-0 text-heading dark:text-white cursor-pointer w-full"
+                className="h-8 text-base md:text-sm border-none bg-transparent p-0 pr-1 focus:ring-0 text-heading dark:text-white cursor-pointer w-[130px] sm:w-[135px]"
               />
             </div>
           </div>
-          <Button variant="primary" className="w-full sm:w-auto justify-center" leftIcon={Download} onClick={exportToCSV}>
-            Export
-          </Button>
+          
+          <div className="px-1 pt-2 pb-1 sm:py-0 sm:pl-2">
+            <Button variant="primary" className="w-full sm:w-auto justify-center" leftIcon={Download} onClick={exportToCSV}>
+              Export
+            </Button>
+          </div>
         </div>
       </div>
 
