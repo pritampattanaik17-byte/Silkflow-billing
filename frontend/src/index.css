@@ -66,3 +66,47 @@
     scrollbar-width: none;
   }
 }
+
+/* ── Print Styles ──────────────────────────────────────────────── */
+@media print {
+  @page {
+    size: A5;
+    margin: 5mm;
+  }
+
+  /* Reset everything for clean print output */
+  html, body {
+    background: white !important;
+    background-image: none !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide all navigation, sidebar, action bars */
+  nav, aside, header,
+  .print\\:hidden,
+  [class*="print:hidden"] {
+    display: none !important;
+  }
+
+  /* Make the invoice sheet fill the page */
+  .invoice-sheet {
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Ensure backgrounds are printed (for table headers, badges) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevent page breaks inside rows */
+  tr, .no-break {
+    page-break-inside: avoid;
+  }
+}
