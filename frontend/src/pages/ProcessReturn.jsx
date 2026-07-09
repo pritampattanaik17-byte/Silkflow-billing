@@ -265,6 +265,7 @@ const ProcessReturn = () => {
                   { label: 'Issue Credit Note', value: 'credit_note' },
                   { label: 'Cash Refund', value: 'cash' },
                   { label: 'UPI / Bank Transfer', value: 'upi' },
+                  { label: 'Item Exchange', value: 'item_exchange' },
                 ]}
               />
               <div className="mt-4">

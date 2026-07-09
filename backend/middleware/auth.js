@@ -1,10 +1,11 @@
 import jwt from 'jsonwebtoken';
+import prisma from '../lib/prisma.js';
 
 /**
  * Authenticate JWT token from Authorization header.
  * Attaches decoded { id, role } to req.user on success.
  */
-export const authenticate = (req, res, next) => {
+export const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -15,7 +16,18 @@ export const authenticate = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id: decoded.id, role: decoded.role };
+    
+    // Check if the user still exists and is currently active
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: { status: true, role: true }
+    });
+
+    if (!user || user.status !== 'active') {
+      return res.status(401).json({ message: 'Your account has been deactivated. Access denied.' });
+    }
+
+    req.user = { id: decoded.id, role: user.role };
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { authFetch } from '../authFetch';
 import { ArrowLeft, Plus, Trash2, Save, Loader2, Printer } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
@@ -10,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 
 const CreateInvoice = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Basic Info State
+  const [successMessage, setSuccessMessage] = useState(location.state?.successMessage || '');
   const [customer, setCustomer] = useState('');
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState('');
@@ -31,6 +33,17 @@ const CreateInvoice = () => {
       { id: Date.now(), name: '', quantity: 1, mrp: '', fixedPrice: '', discount: '', discountType: '%' }
     ]);
   };
+
+  // Clear success message and location state so it doesn't linger on refresh
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      navigate('.', { replace: true, state: {} });
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [location, navigate]);
 
   const handleRemoveItem = (id) => {
     if (items.length === 1) {
@@ -137,6 +150,12 @@ const CreateInvoice = () => {
           <h1 className="text-2xl font-bold text-heading dark:text-white">New Invoice</h1>
         </div>
       </div>
+
+      {successMessage && (
+        <div className="p-3 bg-green-500/10 border border-green-500/50 rounded-lg text-green-600 dark:text-green-400 text-sm flex items-center font-medium">
+          {successMessage}
+        </div>
+      )}
 
       {error && (
         <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm flex items-center">

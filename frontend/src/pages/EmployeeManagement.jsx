@@ -7,6 +7,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import SearchBox from '../components/SearchBox';
 import StatusBadge from '../components/StatusBadge';
+import Pagination from '../components/Pagination';
 
 const EmployeeManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,16 +46,48 @@ const EmployeeManagement = () => {
     startDate: new Date().toISOString().split('T')[0]
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const filteredEmployees = employees.filter(emp => 
     emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     emp.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedEmployees = filteredEmployees.slice(startIndex, startIndex + itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleToggleStatus = async (employeeId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const response = await authFetch(`/users/${employeeId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || 'Failed to update status');
+      }
+
+      setEmployees(employees.map(emp => 
+        emp.id === employeeId ? { ...emp, status: newStatus } : emp
+      ));
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   const handleCreateEmployee = async (e) => {
@@ -93,7 +126,7 @@ const EmployeeManagement = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12 animate-fade-in-up">
+    <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-heading dark:text-white">Employee Management</h1>
@@ -138,7 +171,7 @@ const EmployeeManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEmployees.map((emp) => (
+                {paginatedEmployees.map((emp) => (
                   <TableRow key={emp.id}>
                     <TableCell className="font-medium text-primary dark:text-white number-font">{emp.id}</TableCell>
                     <TableCell>
@@ -164,10 +197,15 @@ const EmployeeManagement = () => {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={emp.status === 'active' ? 'paid' : 'draft'} />
+                      <StatusBadge status={emp.status === 'active' ? 'active' : 'deactive'} />
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className={emp.status === 'active' ? 'text-danger hover:bg-danger/10' : 'text-success hover:bg-success/10'}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className={emp.status === 'active' ? 'text-danger hover:bg-danger/10' : 'text-success hover:bg-success/10'}
+                        onClick={() => handleToggleStatus(emp.id, emp.status)}
+                      >
                         {emp.status === 'active' ? 'Deactivate' : 'Activate'}
                       </Button>
                     </TableCell>
@@ -189,6 +227,13 @@ const EmployeeManagement = () => {
                 )}
               </TableBody>
             </Table>
+          </div>
+          
+          <div className="p-4 border-t border-border dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-text dark:text-white/70 text-center sm:text-left">
+              Showing <span className="font-medium text-heading dark:text-white">{filteredEmployees.length === 0 ? 0 : startIndex + 1}</span> to <span className="font-medium text-heading dark:text-white">{Math.min(startIndex + itemsPerPage, filteredEmployees.length)}</span> of <span className="font-medium text-heading dark:text-white">{filteredEmployees.length}</span> results
+            </p>
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         </CardContent>
       </Card>

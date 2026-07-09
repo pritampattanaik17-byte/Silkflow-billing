@@ -7,6 +7,20 @@ import Button from '../components/Button';
 import Select from '../components/Select';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authFetch } from '../authFetch';
+import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip as RechartsTooltip, Cell } from 'recharts';
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const formattedAmount = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(payload[0].value);
+    return (
+      <div className="bg-gray-900 dark:bg-slate-800 text-white shadow-2xl border border-gray-800 dark:border-slate-700 py-1.5 px-3 rounded-lg font-bold number-font z-50 flex flex-col items-center">
+        <span className="text-[9px] text-gray-400 font-medium tracking-wider uppercase mb-0.5">{label}</span>
+        <span className="text-sm">{formattedAmount}</span>
+      </div>
+    );
+  }
+  return null;
+};
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -194,17 +208,47 @@ const EmployeeDashboard = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle>Tasks & Reminders</CardTitle>
+            <CardTitle>My Sales Trend</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3 p-3 bg-warning/5 dark:bg-warning/10 rounded-md border border-warning/20">
-                <div className="w-2 h-2 mt-1.5 rounded-full bg-warning"></div>
-                <div>
-                  <p className="text-sm font-medium text-heading dark:text-white">Follow up with Mahalaxmi Textiles</p>
-                  <p className="text-xs text-text dark:text-white/60 mt-1">Pending payment for INV-2023-003</p>
-                </div>
-              </div>
+          <CardContent className="pt-6">
+            <div className="h-64 w-full pb-4">
+              {loading ? (
+                <div className="w-full flex justify-center items-center h-full text-text dark:text-white/50">Loading chart...</div>
+              ) : !stats.chartData || stats.chartData.length === 0 ? (
+                <div className="w-full flex justify-center items-center h-full text-text dark:text-white/50">No data available.</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats.chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorSalesEmployee" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.9}/>
+                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.2}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis 
+                      dataKey="day" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
+                      dy={10}
+                    />
+                    <RechartsTooltip 
+                      content={<CustomTooltip />}
+                      cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }} 
+                    />
+                    <Bar 
+                      dataKey="sales" 
+                      radius={[6, 6, 0, 0]} 
+                      barSize={30}
+                      fill="url(#colorSalesEmployee)"
+                    >
+                      {stats.chartData.map((entry, index) => (
+                         <Cell key={`cell-${index}`} className="hover:opacity-80 transition-opacity duration-300 cursor-pointer" />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>

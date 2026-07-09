@@ -67,7 +67,7 @@ model Return {
   
   items             ReturnItem[]
   
-  refundMethod      String   // 'credit_note', 'cash', 'upi'
+  refundMethod      String   // 'credit_note', 'cash', 'upi', 'item_exchange'
   notes             String?
   totalRefund       Float
   

@@ -13,6 +13,8 @@ const Invoices = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [invoicesList, setInvoicesList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -80,6 +82,49 @@ const Invoices = () => {
     invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedInvoices = filteredInvoices.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const exportToCSV = () => {
+    if (!filteredInvoices || filteredInvoices.length === 0) {
+      alert("No invoices available to export.");
+      return;
+    }
+
+    const headers = ['Invoice Number', 'Customer', 'Date', 'Due Date', 'Status', 'Amount (INR)'];
+    const csvRows = [];
+    csvRows.push(headers.join(','));
+
+    filteredInvoices.forEach(invoice => {
+      const csvRow = [
+        `"${invoice.invoiceNumber}"`,
+        `"${invoice.customerName}"`,
+        `"${new Date(invoice.date).toLocaleDateString()}"`,
+        `"${new Date(invoice.dueDate).toLocaleDateString()}"`,
+        `"${invoice.status}"`,
+        `${invoice.finalTotal.toFixed(2)}`
+      ];
+      csvRows.push(csvRow.join(','));
+    });
+
+    const csvData = csvRows.join('\n');
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `invoices_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -88,7 +133,7 @@ const Invoices = () => {
           <p className="text-sm text-text dark:text-white/70 mt-1">Manage and track your wholesale billing.</p>
         </div>
         <div className="mt-4 sm:mt-0 flex items-center space-x-3 w-full sm:w-auto">
-          <Button variant="outline" leftIcon={Download} className="w-1/2 sm:w-auto justify-center">
+          <Button variant="outline" leftIcon={Download} className="w-1/2 sm:w-auto justify-center" onClick={exportToCSV}>
             Export
           </Button>
           <Button variant="primary" leftIcon={Plus} onClick={() => navigate('/invoices/new')} className="w-1/2 sm:w-auto justify-center">
@@ -118,11 +163,6 @@ const Invoices = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" leftIcon={Filter} size="sm">
-                Filter
-              </Button>
-            </div>
           </div>
           
           <Table>
@@ -142,12 +182,12 @@ const Invoices = () => {
                 <TableRow>
                   <TableCell colSpan="7" className="text-center py-8 text-text">Loading invoices...</TableCell>
                 </TableRow>
-              ) : filteredInvoices.length === 0 ? (
+              ) : paginatedInvoices.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan="7" className="text-center py-8 text-text">No invoices found.</TableCell>
                 </TableRow>
               ) : (
-                filteredInvoices.map((invoice) => (
+                paginatedInvoices.map((invoice) => (
                   <TableRow key={invoice.id}>
                     <TableCell className="font-medium number-font text-primary dark:text-white">{invoice.invoiceNumber}</TableCell>
                     <TableCell className="font-medium text-heading dark:text-white/90">{invoice.customerName}</TableCell>
@@ -178,8 +218,10 @@ const Invoices = () => {
           </Table>
           
           <div className="p-4 border-t border-border dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-text dark:text-white/70 text-center sm:text-left">Showing <span className="font-medium text-heading dark:text-white">1</span> to <span className="font-medium text-heading dark:text-white">{filteredInvoices.length}</span> of <span className="font-medium text-heading dark:text-white">{invoicesList.length}</span> results</p>
-            <Pagination currentPage={1} totalPages={Math.ceil(filteredInvoices.length / 10) || 1} onPageChange={() => {}} />
+            <p className="text-sm text-text dark:text-white/70 text-center sm:text-left">
+              Showing <span className="font-medium text-heading dark:text-white">{filteredInvoices.length === 0 ? 0 : startIndex + 1}</span> to <span className="font-medium text-heading dark:text-white">{Math.min(startIndex + itemsPerPage, filteredInvoices.length)}</span> of <span className="font-medium text-heading dark:text-white">{filteredInvoices.length}</span> results
+            </p>
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         </CardContent>
       </Card>

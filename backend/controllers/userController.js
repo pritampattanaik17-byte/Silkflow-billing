@@ -26,3 +26,24 @@ export const getEmployees = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+export const toggleEmployeeStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['active', 'inactive'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status value' });
+    }
+
+    const employee = await prisma.user.update({
+      where: { id },
+      data: { status }
+    });
+
+    res.json({ message: 'Employee status updated successfully', status: employee.status });
+  } catch (error) {
+    console.error('Error updating employee status:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

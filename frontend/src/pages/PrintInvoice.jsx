@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Printer, ArrowLeft } from 'lucide-react';
 import Button from '../components/Button';
+import { authFetch } from '../authFetch';
 
 // ── Helpers ──────────────────────────────────────────────────────────
 const formatCurrency = (n) => {
@@ -19,6 +20,7 @@ const PrintInvoice = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const invoice = location.state?.invoice;
+  const [isCanceling, setIsCanceling] = useState(false);
 
   if (!invoice) {
     return (
@@ -33,12 +35,35 @@ const PrintInvoice = () => {
 
   const items = invoice.items || [];
 
+  const handleCancel = async () => {
+    if (!window.confirm("Are you sure you want to cancel and delete this invoice?")) return;
+    
+    setIsCanceling(true);
+    try {
+      const response = await authFetch(`/invoices/${invoice.id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to cancel invoice');
+      }
+      navigate('/invoices/new', { state: { successMessage: 'Invoice cancelled successfully' } });
+    } catch (error) {
+      alert(error.message);
+      setIsCanceling(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50/50 p-2 sm:p-4 flex flex-col items-center print:p-0 print:bg-white">
       <div className="w-full max-w-[148mm] mb-4 flex justify-between print:hidden">
-        <Button variant="ghost" leftIcon={ArrowLeft} onClick={() => navigate('/invoices')} size="sm">
-          Back
-        </Button>
+        <div className="flex space-x-2">
+          <Button variant="ghost" leftIcon={ArrowLeft} onClick={() => navigate('/invoices')} size="sm">
+            Back
+          </Button>
+          <Button variant="danger" onClick={handleCancel} disabled={isCanceling} size="sm">
+            {isCanceling ? 'Canceling...' : 'Cancel Invoice'}
+          </Button>
+        </div>
         <Button variant="primary" leftIcon={Printer} onClick={() => window.print()} size="sm">
           Print Invoice
         </Button>

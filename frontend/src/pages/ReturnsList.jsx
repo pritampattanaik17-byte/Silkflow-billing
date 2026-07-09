@@ -4,15 +4,20 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Search, Filter, RefreshCcw, Loader2 } from 'lucide-react';
 import Button from '../components/Button';
 import SearchBox from '../components/SearchBox';
+import Select from '../components/Select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/Table';
 import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
+import Pagination from '../components/Pagination';
 import { authFetch } from '../authFetch';
 
 const ReturnsList = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterMethod, setFilterMethod] = useState('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [returnsList, setReturnsList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,8 +58,19 @@ const ReturnsList = () => {
     const customerMatch = (ret.customerName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const invoiceMatch = (ret.originalInvoice?.invoiceNumber || '').toLowerCase().includes(searchTerm.toLowerCase());
     
-    return returnNumMatch || customerMatch || invoiceMatch;
+    const matchesSearch = returnNumMatch || customerMatch || invoiceMatch;
+    const matchesFilter = filterMethod === 'ALL' || ret.refundMethod === filterMethod;
+    
+    return matchesSearch && matchesFilter;
   });
+
+  const totalPages = Math.ceil(filteredReturns.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedReturns = filteredReturns.slice(startIndex, startIndex + itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterMethod]);
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -92,9 +108,19 @@ const ReturnsList = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="outline" leftIcon={Filter}>
-            Filter
-          </Button>
+          <div className="w-full sm:w-48">
+            <Select
+              options={[
+                { label: 'All Methods', value: 'ALL' },
+                { label: 'Credit Note', value: 'credit_note' },
+                { label: 'Cash', value: 'cash' },
+                { label: 'UPI', value: 'upi' },
+                { label: 'Item Exchange', value: 'item_exchange' }
+              ]}
+              value={filterMethod}
+              onChange={(e) => setFilterMethod(e.target.value)}
+            />
+          </div>
         </div>
 
         {isLoading ? (
@@ -103,40 +129,49 @@ const ReturnsList = () => {
             <p className="text-text dark:text-white/70">Loading returns...</p>
           </div>
         ) : filteredReturns.length > 0 ? (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Return ID</TableHead>
-                  <TableHead>Orig Invoice</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Refund Method</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredReturns.map((ret) => (
-                  <TableRow key={ret.id}>
-                    <TableCell className="font-medium number-font text-danger">{ret.returnNumber}</TableCell>
-                    <TableCell className="number-font text-primary dark:text-white">{ret.originalInvoice?.invoiceNumber || 'N/A'}</TableCell>
-                    <TableCell className="dark:text-white/90">{ret.customerName || 'N/A'}</TableCell>
-                    <TableCell className="number-font text-text dark:text-white/70 text-sm">{new Date(ret.date).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-secondary/10 text-secondary capitalize">
-                        {ret.refundMethod?.replace('_', ' ')}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right number-font font-medium text-danger">₹{ret.totalRefund?.toFixed(2) || '0.00'}</TableCell>
-                    <TableCell>
-                      <StatusBadge status="paid" />
-                    </TableCell>
+          <>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Return ID</TableHead>
+                    <TableHead>Orig Invoice</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Refund Method</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {paginatedReturns.map((ret) => (
+                    <TableRow key={ret.id}>
+                      <TableCell className="font-medium number-font text-danger">{ret.returnNumber}</TableCell>
+                      <TableCell className="number-font text-primary dark:text-white">{ret.originalInvoice?.invoiceNumber || 'N/A'}</TableCell>
+                      <TableCell className="dark:text-white/90">{ret.customerName || 'N/A'}</TableCell>
+                      <TableCell className="number-font text-text dark:text-white/70 text-sm">{new Date(ret.date).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-secondary/10 text-secondary capitalize">
+                          {ret.refundMethod?.replace('_', ' ')}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right number-font font-medium text-danger">₹{ret.totalRefund?.toFixed(2) || '0.00'}</TableCell>
+                      <TableCell>
+                        <StatusBadge status="paid" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            <div className="p-4 border-t border-border dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-sm text-text dark:text-white/70 text-center sm:text-left">
+                Showing <span className="font-medium text-heading dark:text-white">{filteredReturns.length === 0 ? 0 : startIndex + 1}</span> to <span className="font-medium text-heading dark:text-white">{Math.min(startIndex + itemsPerPage, filteredReturns.length)}</span> of <span className="font-medium text-heading dark:text-white">{filteredReturns.length}</span> results
+              </p>
+              <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+            </div>
+          </>
         ) : (
           <EmptyState 
             icon={RefreshCcw}

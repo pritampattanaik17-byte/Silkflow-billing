@@ -9,6 +9,7 @@ const StatusBadge = ({ status, className }) => {
     draft: 'bg-text/10 text-text border-text/20',
     active: 'bg-success/10 text-success border-success/20',
     inactive: 'bg-text/10 text-text border-text/20',
+    deactive: 'bg-text/10 text-text border-text/20',
   };
 
   const normalizedStatus = status?.toLowerCase() || 'draft';
