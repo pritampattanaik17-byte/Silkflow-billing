@@ -87,24 +87,42 @@ export const register = async (req, res) => {
       }
     }
 
+    // Owner accounts are active immediately; employees require owner approval
+    const initialStatus = userRole === 'owner' ? 'active' : 'inactive';
+
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         role: userRole,
+        status: initialStatus,
       },
     });
 
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
+    // Only issue a token for active users (owner on first registration)
+    if (initialStatus === 'active') {
+      const token = jwt.sign(
+        { id: user.id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '1d' }
+      );
 
+      return res.status(201).json({
+        message: 'Registration successful',
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    }
+
+    // Employee registration — no token, must wait for owner activation
     res.status(201).json({
-      message: 'Registration successful',
-      token,
+      message: 'Registration successful. Your account is pending approval by the owner. Please wait for activation before logging in.',
       user: {
         id: user.id,
         name: user.name,

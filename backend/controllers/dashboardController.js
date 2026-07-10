@@ -89,13 +89,25 @@ export const getDashboardStats = async (req, res) => {
     });
     const totalRefund = refundResult._sum.totalRefund || 0;
 
-    // 3. Active Customers
+    // 3. Active Customers (Filtered by Date)
     const customers = await prisma.invoice.findMany({
       where: customersFilter,
       select: { customerName: true },
       distinct: ['customerName']
     });
     const activeCustomers = customers.length;
+
+    // 3b. Total Customers (All time)
+    const totalCustomersFilter = {};
+    if (employeeId) {
+      totalCustomersFilter.createdById = employeeId;
+    }
+    const allCustomers = await prisma.invoice.findMany({
+      where: totalCustomersFilter,
+      select: { customerName: true },
+      distinct: ['customerName']
+    });
+    const totalCustomersCount = allCustomers.length;
 
     // 4. Recent Transactions (Invoices + Returns)
     const recentInvoicesFilter = {};
@@ -213,6 +225,7 @@ export const getDashboardStats = async (req, res) => {
       refundChange: calculatePercentageChange(totalRefund, previousRefund),
       activeCustomers,
       customersChange: calculatePercentageChange(activeCustomers, previousCustomersCount),
+      totalCustomers: totalCustomersCount,
       chartData,
       recentTransactions: combinedTransactions.map(t => ({
         id: t.id,

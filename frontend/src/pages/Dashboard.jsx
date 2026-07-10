@@ -31,6 +31,7 @@ const Dashboard = () => {
     revenueChange: 0,
     totalRefund: 0,
     refundChange: 0,
+    totalCustomers: 0,
     activeCustomers: 0,
     customersChange: 0,
     recentTransactions: [],
@@ -152,16 +153,10 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Active Customers */}
+        {/* Total Customers */}
         <Card className="border-t-4 border-t-secondary bg-gradient-to-br from-white to-secondary/5 dark:from-white/5 dark:to-secondary/10 relative overflow-hidden group hover:shadow-md transition-all sticky top-8 z-30 md:static md:top-auto md:z-auto shadow-lg md:shadow-none">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
-            <CardTitle className="text-sm font-semibold text-text dark:text-white/70 uppercase tracking-wider">Active Customers</CardTitle>
-            <input 
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="h-11 md:h-8 text-base md:text-xs py-1 px-3 md:px-2 bg-white/80 dark:bg-black/20 backdrop-blur-sm border border-white/60 dark:border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 text-text dark:text-white font-medium cursor-pointer"
-            />
+            <CardTitle className="text-sm font-semibold text-text dark:text-white/70 uppercase tracking-wider">Total Customers</CardTitle>
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="flex items-center space-x-3 mt-2">
@@ -170,11 +165,10 @@ const Dashboard = () => {
               </div>
               <div>
                 <div className="text-3xl font-bold text-heading dark:text-white number-font">
-                  {loading ? '...' : stats.activeCustomers}
+                  {loading ? '...' : (stats.totalCustomers ?? 0)}
                 </div>
-                <p className={`text-xs font-semibold mt-1 flex items-center ${Number(stats.customersChange) >= 0 ? 'text-emerald-600' : 'text-danger/80'}`}>
-                  {Number(stats.customersChange) >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
-                  {Number(stats.customersChange) > 0 ? '+' : ''}{stats.customersChange}% from previous period
+                <p className="text-xs font-semibold mt-1 flex items-center text-emerald-600">
+                  <TrendingUp className="w-3 h-3 mr-1" /> All time distinct customers
                 </p>
               </div>
             </div>

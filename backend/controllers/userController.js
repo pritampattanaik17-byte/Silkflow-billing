@@ -36,6 +36,25 @@ export const toggleEmployeeStatus = async (req, res) => {
       return res.status(400).json({ message: 'Invalid status value' });
     }
 
+    // Prevent owner from targeting themselves or non-employee users
+    if (id === req.user.id) {
+      return res.status(403).json({ message: 'You cannot change your own status.' });
+    }
+
+    // Only allow toggling users with role 'employee'
+    const targetUser = await prisma.user.findUnique({
+      where: { id },
+      select: { role: true }
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (targetUser.role !== 'employee') {
+      return res.status(403).json({ message: 'Only employee accounts can be toggled.' });
+    }
+
     const employee = await prisma.user.update({
       where: { id },
       data: { status }

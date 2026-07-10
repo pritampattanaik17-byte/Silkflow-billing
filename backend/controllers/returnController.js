@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma.js';
+import { createReturnSchema } from '../validators/returnValidator.js';
 
 export const getReturns = async (req, res) => {
   try {
@@ -22,6 +23,12 @@ export const getReturns = async (req, res) => {
 
 export const createReturn = async (req, res) => {
   try {
+    const validationResult = createReturnSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(err => err.message).join(', ');
+      return res.status(400).json({ message: errorMessages });
+    }
+
     const {
       customerName,
       originalInvoiceId,
@@ -30,14 +37,10 @@ export const createReturn = async (req, res) => {
       notes,
       items,
       totalRefund
-    } = req.body;
+    } = validationResult.data;
 
     // User identity comes from the verified JWT token, not the request body
     const processedById = req.user.id;
-
-    if (!items || items.length === 0) {
-      return res.status(400).json({ message: 'Return must have at least one item' });
-    }
 
     let resolvedInvoiceId = null;
     if (originalInvoiceId && originalInvoiceId.trim() !== '') {
@@ -88,8 +91,6 @@ export const createReturn = async (req, res) => {
     res.status(201).json({ message: 'Return processed successfully', return: newReturn });
   } catch (error) {
     console.error('Create return error:', error);
-    res.status(500).json({ 
-      message: error.message || 'Internal server error while creating return' 
-    });
+    res.status(500).json({ message: 'Internal server error while creating return' });
   }
 };

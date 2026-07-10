@@ -1,6 +1,7 @@
 // SilkFlow Backend - All routes registered
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -19,6 +20,9 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Security headers (X-Frame-Options, X-Content-Type-Options, HSTS, etc.)
+app.use(helmet());
 
 // Allowed origins for CORS
 const allowedOrigins = [
@@ -40,8 +44,9 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsers with explicit size limits to prevent DoS via oversized payloads
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Basic Health Route
 app.get('/api/health', (req, res) => {

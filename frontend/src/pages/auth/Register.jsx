@@ -65,14 +65,15 @@ const Register = ({ onLogin }) => {
         throw new Error(data.message || 'Registration failed');
       }
 
-      // Store token
-      localStorage.setItem('token', data.token);
-      
-      // Update app context
-      onLogin(data.user);
-      
-      // Navigate to dashboard with success message
-      navigate('/', { state: { successMessage: 'Account created successfully! Welcome to your dashboard.' } });
+      // If a token is returned (owner registration), log in immediately
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        onLogin(data.user);
+        navigate('/', { state: { successMessage: 'Account created successfully! Welcome to your dashboard.' } });
+      } else {
+        // Employee registration — account pending owner approval
+        navigate('/login', { state: { successMessage: data.message } });
+      }
       
     } catch (err) {
       setError(err.message);
@@ -85,8 +86,8 @@ const Register = ({ onLogin }) => {
     <Card className="shadow-lg animate-fade-in-up">
       <CardContent className="px-10 py-8">
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold text-heading">Create a new account</h2>
-          <p className="text-sm text-text mt-2">Start managing your wholesale business today</p>
+          <h2 className="text-2xl font-bold text-heading dark:text-white">Create a new account</h2>
+          <p className="text-sm text-text dark:text-white/70 mt-2">Start managing your wholesale business today</p>
         </div>
 
         {error && (
@@ -97,17 +98,17 @@ const Register = ({ onLogin }) => {
 
         <form onSubmit={handleRegister} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-heading mb-1.5">Full Name</label>
+            <label className="block text-sm font-medium text-heading dark:text-white mb-1.5">Full Name</label>
             <Input type="text" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-heading mb-1.5">Email address</label>
+            <label className="block text-sm font-medium text-heading dark:text-white mb-1.5">Email address</label>
             <Input type="email" placeholder="admin@vastraflow.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-heading mb-1.5">Password</label>
+            <label className="block text-sm font-medium text-heading dark:text-white mb-1.5">Password</label>
             <div className="relative w-full">
               <input 
                 type={showPassword ? 'text' : 'password'} 
@@ -128,7 +129,7 @@ const Register = ({ onLogin }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-heading mb-1.5">Role</label>
+            <label className="block text-sm font-medium text-heading dark:text-white mb-1.5">Role</label>
             <Select 
               options={[
                 ...(hasOwner ? [] : [{ label: 'Owner (Full Access)', value: 'owner' }]),
@@ -138,7 +139,7 @@ const Register = ({ onLogin }) => {
               onChange={(e) => setRole(e.target.value)}
             />
             {hasOwner && (
-              <p className="text-xs text-text mt-1 text-danger">An Owner account already exists. You can only register as an Employee.</p>
+              <p className="text-xs text-text dark:text-white/70 mt-1 text-danger">An Owner account already exists. You can only register as an Employee.</p>
             )}
           </div>
 
@@ -147,7 +148,7 @@ const Register = ({ onLogin }) => {
           </Button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-text">
+        <div className="mt-8 text-center text-sm text-text dark:text-white/70">
           Already have an account?{' '}
           <Link to="/login" className="font-medium text-primary hover:text-primary/80">
             Sign in instead

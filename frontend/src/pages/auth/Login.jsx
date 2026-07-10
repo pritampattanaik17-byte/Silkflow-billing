@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import API_BASE_URL from '../../config';
 import { Card, CardContent } from '../../components/Card';
 import Input from '../../components/Input';
@@ -15,6 +15,8 @@ const Login = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [successMessage] = useState(location.state?.successMessage || '');
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -63,9 +65,15 @@ const Login = ({ onLogin }) => {
     <Card className="shadow-lg animate-fade-in-up">
       <CardContent className="px-10 py-8">
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold text-heading">Sign in to your account</h2>
-          <p className="text-sm text-text mt-2">Enter your details to access the ERP</p>
+          <h2 className="text-2xl font-bold text-heading dark:text-white">Sign in to your account</h2>
+          <p className="text-sm text-text dark:text-white/70 mt-2">Enter your details to access the ERP</p>
         </div>
+
+        {successMessage && (
+          <div className="mb-6 p-3 bg-green-500/10 border border-green-500/50 rounded-lg text-green-600 dark:text-green-400 text-sm text-center">
+            {successMessage}
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm text-center">
@@ -75,7 +83,7 @@ const Login = ({ onLogin }) => {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-heading mb-1.5">Email address</label>
+            <label className="block text-sm font-medium text-heading dark:text-white mb-1.5">Email address</label>
             <Input 
               type="email" 
               placeholder="admin@vastraflow.com" 
@@ -86,7 +94,7 @@ const Login = ({ onLogin }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-heading mb-1.5">Password</label>
+            <label className="block text-sm font-medium text-heading dark:text-white mb-1.5">Password</label>
             <div className="relative w-full">
               <input 
                 type={showPassword ? 'text' : 'password'} 
@@ -107,7 +115,7 @@ const Login = ({ onLogin }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-heading mb-1.5">Role Select</label>
+            <label className="block text-sm font-medium text-heading dark:text-white mb-1.5">Role Select</label>
             <Select 
               options={[
                 { label: 'Owner (Full Access)', value: 'owner' },
@@ -116,7 +124,7 @@ const Login = ({ onLogin }) => {
               value={role}
               onChange={(e) => setRole(e.target.value)}
             />
-            <p className="text-xs text-text mt-1">Select your role to login</p>
+            <p className="text-xs text-text dark:text-white/60 mt-1">Select your role to login</p>
           </div>
 
 
@@ -126,7 +134,7 @@ const Login = ({ onLogin }) => {
           </Button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-text">
+        <div className="mt-8 text-center text-sm text-text dark:text-white/70">
           Don't have an account?{' '}
           <Link to="/register" className="font-medium text-primary hover:text-primary/80">
             Register now
