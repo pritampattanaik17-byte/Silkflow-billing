@@ -5,7 +5,7 @@ import StatusBadge from '../components/StatusBadge';
 import Pagination from '../components/Pagination';
 import SearchBox from '../components/SearchBox';
 import Button from '../components/Button';
-import { Filter, Download, Plus, Trash2, Loader2 } from 'lucide-react';
+import { Filter, Download, Plus, Trash2, Loader2, ShieldCheck } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authFetch } from '../authFetch';
 
@@ -189,7 +189,14 @@ const Invoices = () => {
               ) : (
                 paginatedInvoices.map((invoice) => (
                   <TableRow key={invoice.id}>
-                    <TableCell className="font-medium number-font text-primary dark:text-white">{invoice.invoiceNumber}</TableCell>
+                    <TableCell className="font-medium number-font text-primary dark:text-white">
+                      <div className="flex items-center gap-2">
+                        {invoice.invoiceNumber}
+                        {invoice.createdBy?.role === 'owner' && (
+                          <ShieldCheck className="h-4 w-4 text-emerald-500" title="Created by Admin" />
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="font-medium text-heading dark:text-white/90">{invoice.customerName}</TableCell>
                     <TableCell className="text-text dark:text-white/70 number-font">{new Date(invoice.date).toLocaleDateString()}</TableCell>
                     <TableCell className="text-text dark:text-white/70 number-font">{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>

@@ -153,11 +153,18 @@ export const getInvoices = async (req, res) => {
       'Surrogate-Control': 'no-store'
     });
 
+    // V3: Scope invoices by role — employees see only their own
+    const filter = {};
+    if (req.user.role === 'employee') {
+      filter.createdById = req.user.id;
+    }
+
     const invoices = await prisma.invoice.findMany({
+      where: filter,
       orderBy: { createdAt: 'desc' },
       include: {
         createdBy: {
-          select: { name: true }
+          select: { name: true, role: true }
         }
       }
     });
