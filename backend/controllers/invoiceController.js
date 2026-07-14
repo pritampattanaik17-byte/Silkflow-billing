@@ -1,23 +1,7 @@
 import prisma from '../lib/prisma.js';
 import { createInvoiceSchema } from '../validators/invoiceValidator.js';
 
-/**
- * Generate a sequential, collision-proof invoice number.
- * 
- * Pattern:  SF/FY2627/0001
- *   SF      → SilkFlow brand prefix
- *   FY2627  → Indian Financial Year (April 2026 – March 2027)
- *   0001    → Sequential number within that FY, zero-padded to 4 digits
- * 
- * How it works:
- *   1. Determines the current Indian Financial Year (Apr–Mar).
- *   2. Queries the DB for the highest existing invoice number in that FY.
- *   3. Increments by 1 to produce the next number.
- *   4. If the DB is empty for that FY, starts at 0001.
- * 
- * This guarantees ZERO overlaps because every number is derived
- * from the actual database state, not from randomness.
- */
+
 const getFinancialYear = () => {
   const now = new Date();
   const month = now.getMonth(); // 0-indexed (0 = Jan, 3 = Apr)
