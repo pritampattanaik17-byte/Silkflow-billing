@@ -22,7 +22,7 @@ export const getEmployees = async (req, res) => {
 
     res.json(employees);
   } catch (error) {
-    console.error('Error fetching employees:', error);
+    console.error('Error fetching employees:', process.env.NODE_ENV === 'production' ? error.message : error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -62,7 +62,7 @@ export const toggleEmployeeStatus = async (req, res) => {
 
     res.json({ message: 'Employee status updated successfully', status: employee.status });
   } catch (error) {
-    console.error('Error updating employee status:', error);
+    console.error('Error updating employee status:', process.env.NODE_ENV === 'production' ? error.message : error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };

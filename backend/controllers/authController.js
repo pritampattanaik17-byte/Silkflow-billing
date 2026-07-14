@@ -26,7 +26,8 @@ export const login = async (req, res) => {
     }
 
     if (role && user.role !== role) {
-      return res.status(403).json({ message: `Access denied: You are registered as an ${user.role}, not an ${role}.` });
+      // V8: Generic message — do not reveal the user's actual role
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -52,7 +53,7 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error:', process.env.NODE_ENV === 'production' ? error.message : error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -131,7 +132,7 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', process.env.NODE_ENV === 'production' ? error.message : error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -143,7 +144,7 @@ export const checkOwner = async (req, res) => {
     });
     res.json({ hasOwner: !!owner });
   } catch (error) {
-    console.error('Check owner error:', error);
+    console.error('Check owner error:', process.env.NODE_ENV === 'production' ? error.message : error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };

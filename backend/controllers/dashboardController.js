@@ -9,14 +9,33 @@ export const getDashboardStats = async (req, res) => {
   try {
     const { date, employeeId } = req.query;
 
+    // --- V5: Validate query parameters ---
+    const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    if (date && !ISO_DATE_RE.test(date)) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+    if (employeeId && !UUID_RE.test(employeeId)) {
+      return res.status(400).json({ message: 'Invalid employeeId format.' });
+    }
+
+    // --- V2: Role-based access control for employeeId ---
+    // Employees can ONLY view their own data; owners may view any employee or all.
+    let resolvedEmployeeId = employeeId || null;
+    if (req.user.role === 'employee') {
+      // Force employee to their own ID regardless of what they pass
+      resolvedEmployeeId = req.user.id;
+    }
+
     const revenueFilter = { status: 'paid' };
     const refundFilter = {};
     const customersFilter = {};
 
-    if (employeeId) {
-      revenueFilter.createdById = employeeId;
-      refundFilter.processedById = employeeId;
-      customersFilter.createdById = employeeId;
+    if (resolvedEmployeeId) {
+      revenueFilter.createdById = resolvedEmployeeId;
+      refundFilter.processedById = resolvedEmployeeId;
+      customersFilter.createdById = resolvedEmployeeId;
     }
 
     let previousRevenue = 0;
@@ -47,7 +66,7 @@ export const getDashboardStats = async (req, res) => {
       const prevDateRange = { gte: prevStartDate, lte: prevEndDate };
 
       const prevRevFilter = { status: 'paid', date: prevDateRange };
-      if (employeeId) prevRevFilter.createdById = employeeId;
+      if (resolvedEmployeeId) prevRevFilter.createdById = resolvedEmployeeId;
 
       const prevRevResult = await prisma.invoice.aggregate({
         _sum: { finalTotal: true },
@@ -56,7 +75,7 @@ export const getDashboardStats = async (req, res) => {
       previousRevenue = prevRevResult._sum.finalTotal || 0;
 
       const prevRefFilter = { date: prevDateRange };
-      if (employeeId) prevRefFilter.processedById = employeeId;
+      if (resolvedEmployeeId) prevRefFilter.processedById = resolvedEmployeeId;
 
       const prevRefResult = await prisma.return.aggregate({
         _sum: { totalRefund: true },
@@ -65,7 +84,7 @@ export const getDashboardStats = async (req, res) => {
       previousRefund = prevRefResult._sum.totalRefund || 0;
 
       const prevCustFilter = { date: prevDateRange };
-      if (employeeId) prevCustFilter.createdById = employeeId;
+      if (resolvedEmployeeId) prevCustFilter.createdById = resolvedEmployeeId;
 
       const prevCust = await prisma.invoice.findMany({
         where: prevCustFilter,
@@ -99,8 +118,8 @@ export const getDashboardStats = async (req, res) => {
 
     // 3b. Total Customers (All time)
     const totalCustomersFilter = {};
-    if (employeeId) {
-      totalCustomersFilter.createdById = employeeId;
+    if (resolvedEmployeeId) {
+      totalCustomersFilter.createdById = resolvedEmployeeId;
     }
     const allCustomers = await prisma.invoice.findMany({
       where: totalCustomersFilter,
@@ -112,9 +131,9 @@ export const getDashboardStats = async (req, res) => {
     // 4. Recent Transactions (Invoices + Returns)
     const recentInvoicesFilter = {};
     const recentReturnsFilter = {};
-    if (employeeId) {
-      recentInvoicesFilter.createdById = employeeId;
-      recentReturnsFilter.processedById = employeeId;
+    if (resolvedEmployeeId) {
+      recentInvoicesFilter.createdById = resolvedEmployeeId;
+      recentReturnsFilter.processedById = resolvedEmployeeId;
     }
 
     const recentInvoices = await prisma.invoice.findMany({
@@ -196,7 +215,7 @@ export const getDashboardStats = async (req, res) => {
     }
 
     const chartInvoicesFilter = { status: 'paid', date: chartFilter };
-    if (employeeId) chartInvoicesFilter.createdById = employeeId;
+    if (resolvedEmployeeId) chartInvoicesFilter.createdById = resolvedEmployeeId;
 
     const paidInvoicesForChart = await prisma.invoice.findMany({
       where: chartInvoicesFilter,
@@ -237,7 +256,7 @@ export const getDashboardStats = async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('Get dashboard stats error:', error);
+    console.error('Get dashboard stats error:', process.env.NODE_ENV === 'production' ? error.message : error);
     res.status(500).json({ message: 'Internal server error while fetching dashboard stats' });
   }
 };

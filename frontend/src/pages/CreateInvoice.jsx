@@ -1,12 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authFetch } from '../authFetch';
-import { ArrowLeft, Plus, Trash2, Save, Loader2, Printer } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save, Loader2, Printer, Camera, Check, X } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import Input from '../components/Input';
 import Select from '../components/Select';
 import Button from '../components/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/Table';
+
+/**
+ * Compress an image file to a target max dimension and quality.
+ * Returns a base64 data URI string.
+ */
+const compressImage = (file, maxDimension = 1024, quality = 0.7) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+
+        // Scale down if exceeds max dimension
+        if (width > maxDimension || height > maxDimension) {
+          const ratio = Math.min(maxDimension / width, maxDimension / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+};
 
 const CreateInvoice = () => {
   const navigate = useNavigate();
@@ -21,6 +57,10 @@ const CreateInvoice = () => {
   const [error, setError] = useState('');
   const [taxAmount, setTaxAmount] = useState('');
   const [taxType, setTaxType] = useState('%');
+
+  // Camera scan state — tracks which item is being scanned and its status
+  const [scanState, setScanState] = useState({}); // { [itemId]: 'scanning' | 'success' | 'error' }
+  const fileInputRefs = useRef({});
   
   // Line Items State
   const [items, setItems] = useState([
@@ -81,6 +121,69 @@ const CreateInvoice = () => {
     return Math.max(0, total); // Prevent negative totals
   };
 
+  /**
+   * Handle AI camera scan for an item row.
+   * Opens the camera/file picker, compresses the image, sends it to
+   * the backend vision API, and auto-fills item fields on success.
+   */
+  const handleScanImage = async (itemId) => {
+    // Trigger the hidden file input
+    const fileInput = fileInputRefs.current[itemId];
+    if (fileInput) {
+      fileInput.value = ''; // Reset so same file can be re-selected
+      fileInput.click();
+    }
+  };
+
+  const handleFileSelected = async (itemId, file) => {
+    if (!file) return;
+
+    // Set scanning state
+    setScanState(prev => ({ ...prev, [itemId]: 'scanning' }));
+
+    try {
+      // Compress the image to reduce size (max 1024px, 70% quality)
+      const compressedBase64 = await compressImage(file, 1024, 0.7);
+
+      // Send to backend vision endpoint
+      const response = await authFetch('/vision/scan', {
+        method: 'POST',
+        body: JSON.stringify({ image: compressedBase64 }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to scan image');
+      }
+
+      // Auto-fill the item fields with extracted data
+      setItems(prev => prev.map(item => {
+        if (item.id === itemId) {
+          return {
+            ...item,
+            name: data.name || item.name,
+            mrp: data.mrp ? String(data.mrp) : item.mrp,
+          };
+        }
+        return item;
+      }));
+
+      // Show success state
+      setScanState(prev => ({ ...prev, [itemId]: 'success' }));
+      setTimeout(() => {
+        setScanState(prev => ({ ...prev, [itemId]: null }));
+      }, 2000);
+
+    } catch (err) {
+      console.error('Scan error:', err);
+      setScanState(prev => ({ ...prev, [itemId]: 'error' }));
+      setError(err.message || 'Could not read label. Try again with a clearer image.');
+      setTimeout(() => {
+        setScanState(prev => ({ ...prev, [itemId]: null }));
+      }, 3000);
+    }
+  };
   const subtotal = items.reduce((sum, item) => sum + calculateItemTotal(item), 0);
   const parsedTaxInput = parseFloat(taxAmount) || 0;
   const calculatedTax = taxType === '%' ? subtotal * (parsedTaxInput / 100) : parsedTaxInput;
@@ -231,11 +334,53 @@ const CreateInvoice = () => {
 
                   <div className="md:col-span-3">
                     <label className="text-xs font-medium text-text dark:text-white/70 md:hidden mb-1.5 block">Item Name / Description</label>
-                    <Input 
-                      placeholder="e.g. Banarasi Silk Saree" 
-                      value={item.name}
-                      onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                    />
+                    <div className="flex items-center gap-2">
+                      {/* Hidden file input for camera/image picker */}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        ref={(el) => { fileInputRefs.current[item.id] = el; }}
+                        onChange={(e) => handleFileSelected(item.id, e.target.files?.[0])}
+                      />
+                      {/* AI Scan Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleScanImage(item.id)}
+                        disabled={scanState[item.id] === 'scanning'}
+                        className={`
+                          relative flex-shrink-0 h-[44px] w-[44px] md:h-10 md:w-10 
+                          flex items-center justify-center rounded-xl
+                          transition-all duration-300 shadow-sm
+                          ${scanState[item.id] === 'scanning'
+                            ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white animate-pulse cursor-wait'
+                            : scanState[item.id] === 'success'
+                              ? 'bg-gradient-to-br from-emerald-400 to-green-500 text-white scale-110'
+                              : scanState[item.id] === 'error'
+                                ? 'bg-gradient-to-br from-red-400 to-rose-500 text-white'
+                                : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 hover:shadow-md hover:scale-105 active:scale-95'
+                          }
+                        `}
+                        title="Scan product label with AI camera"
+                      >
+                        {scanState[item.id] === 'scanning' ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : scanState[item.id] === 'success' ? (
+                          <Check className="h-4 w-4" />
+                        ) : scanState[item.id] === 'error' ? (
+                          <X className="h-4 w-4" />
+                        ) : (
+                          <Camera className="h-4 w-4" />
+                        )}
+                      </button>
+                      <Input 
+                        placeholder="e.g. Banarasi Silk Saree" 
+                        value={item.name}
+                        onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                        className="flex-1"
+                      />
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-3 gap-2 md:col-span-5 md:grid-cols-5 md:gap-4">

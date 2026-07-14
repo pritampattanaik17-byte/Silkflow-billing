@@ -138,7 +138,7 @@ export const createInvoice = async (req, res) => {
 
     res.status(201).json({ message: 'Invoice created successfully', invoice });
   } catch (error) {
-    console.error('Create invoice error:', error);
+    console.error('Create invoice error:', process.env.NODE_ENV === 'production' ? error.message : error);
     res.status(500).json({ message: 'Internal server error while creating invoice' });
   }
 };
@@ -163,7 +163,7 @@ export const getInvoices = async (req, res) => {
     });
     res.json(invoices);
   } catch (error) {
-    console.error('Get invoices error:', error);
+    console.error('Get invoices error:', process.env.NODE_ENV === 'production' ? error.message : error);
     res.status(500).json({ message: 'Internal server error while fetching invoices' });
   }
 };
@@ -172,29 +172,33 @@ export const deleteInvoice = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // First delete related items (cascade), then the invoice
-    await prisma.invoiceItem.deleteMany({
-      where: { invoiceId: id }
-    });
+    // V7: Wrap all deletions in a transaction for atomicity
+    await prisma.$transaction(async (tx) => {
+      // First delete related invoice items
+      await tx.invoiceItem.deleteMany({
+        where: { invoiceId: id }
+      });
 
-    // Also delete any returns linked to this invoice
-    const linkedReturns = await prisma.return.findMany({
-      where: { originalInvoiceId: id },
-      select: { id: true }
-    });
-    
-    for (const ret of linkedReturns) {
-      await prisma.returnItem.deleteMany({ where: { returnId: ret.id } });
-    }
-    await prisma.return.deleteMany({ where: { originalInvoiceId: id } });
+      // Delete return items linked to returns of this invoice
+      const linkedReturns = await tx.return.findMany({
+        where: { originalInvoiceId: id },
+        select: { id: true }
+      });
 
-    await prisma.invoice.delete({
-      where: { id }
+      for (const ret of linkedReturns) {
+        await tx.returnItem.deleteMany({ where: { returnId: ret.id } });
+      }
+      await tx.return.deleteMany({ where: { originalInvoiceId: id } });
+
+      // Finally delete the invoice itself
+      await tx.invoice.delete({
+        where: { id }
+      });
     });
 
     res.json({ message: 'Invoice deleted successfully' });
   } catch (error) {
-    console.error('Delete invoice error:', error);
+    console.error('Delete invoice error:', process.env.NODE_ENV === 'production' ? error.message : error);
     if (error.code === 'P2025') {
       return res.status(404).json({ message: 'Invoice not found' });
     }

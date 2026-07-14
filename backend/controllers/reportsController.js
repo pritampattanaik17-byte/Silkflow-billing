@@ -8,11 +8,31 @@ export const getReportsData = async (req, res) => {
       return res.status(400).json({ message: 'startDate and endDate are required' });
     }
 
+    // V6: Strict date validation
+    const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+    if (!ISO_DATE_RE.test(startDate) || !ISO_DATE_RE.test(endDate)) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
 
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ message: 'Invalid date values.' });
+    }
+
+    if (start > end) {
+      return res.status(400).json({ message: 'startDate must be before or equal to endDate.' });
+    }
+
+    // Cap maximum range to 1 year (366 days) to prevent DoS
+    const MAX_RANGE_MS = 366 * 24 * 60 * 60 * 1000;
+    if (end.getTime() - start.getTime() > MAX_RANGE_MS) {
+      return res.status(400).json({ message: 'Date range cannot exceed 1 year.' });
+    }
 
     const dateFilter = { gte: start, lte: end };
 
@@ -146,7 +166,7 @@ export const getReportsData = async (req, res) => {
       reportData
     });
   } catch (error) {
-    console.error('Get reports error:', error);
+    console.error('Get reports error:', process.env.NODE_ENV === 'production' ? error.message : error);
     res.status(500).json({ message: 'Internal server error while fetching reports' });
   }
 };
