@@ -10,4 +10,5 @@ router.get('/', authenticate, getInvoices);
 // Only owners can delete invoices
 router.delete('/:id', authenticate, requireRole('owner'), deleteInvoice);
 
+
 export default router;
