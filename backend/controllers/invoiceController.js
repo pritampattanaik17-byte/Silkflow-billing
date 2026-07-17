@@ -71,7 +71,7 @@ export const createInvoice = async (req, res) => {
       return tx.invoice.create({
         data: {
           invoiceNumber,
-          customerName,
+          customerName: customerName.trim(),
           date: new Date(date),
           dueDate: new Date(dueDate),
           subtotal: recalculatedSubtotal,

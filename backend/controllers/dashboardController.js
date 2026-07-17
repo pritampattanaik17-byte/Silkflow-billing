@@ -88,10 +88,9 @@ export const getDashboardStats = async (req, res) => {
 
       const prevCust = await prisma.invoice.findMany({
         where: prevCustFilter,
-        select: { customerName: true },
-        distinct: ['customerName']
+        select: { customerName: true }
       });
-      previousCustomersCount = prevCust.length;
+      previousCustomersCount = new Set(prevCust.map(c => (c.customerName || '').toLowerCase().trim())).size;
     }
 
     // 1. Total Revenue
@@ -111,10 +110,9 @@ export const getDashboardStats = async (req, res) => {
     // 3. Active Customers (Filtered by Date)
     const customers = await prisma.invoice.findMany({
       where: customersFilter,
-      select: { customerName: true },
-      distinct: ['customerName']
+      select: { customerName: true }
     });
-    const activeCustomers = customers.length;
+    const activeCustomers = new Set(customers.map(c => (c.customerName || '').toLowerCase().trim())).size;
 
     // 3b. Total Customers (All time)
     const totalCustomersFilter = {};
@@ -123,10 +121,9 @@ export const getDashboardStats = async (req, res) => {
     }
     const allCustomers = await prisma.invoice.findMany({
       where: totalCustomersFilter,
-      select: { customerName: true },
-      distinct: ['customerName']
+      select: { customerName: true }
     });
-    const totalCustomersCount = allCustomers.length;
+    const totalCustomersCount = new Set(allCustomers.map(c => (c.customerName || '').toLowerCase().trim())).size;
 
     // 4. Recent Transactions (Invoices + Returns)
     const recentInvoicesFilter = {};
