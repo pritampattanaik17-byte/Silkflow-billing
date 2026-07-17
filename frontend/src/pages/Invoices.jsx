@@ -5,7 +5,7 @@ import StatusBadge from '../components/StatusBadge';
 import Pagination from '../components/Pagination';
 import SearchBox from '../components/SearchBox';
 import Button from '../components/Button';
-import { Filter, Download, Plus, Trash2, Loader2, ShieldCheck } from 'lucide-react';
+import { Filter, Download, Plus, Trash2, Loader2, ShieldCheck, Printer } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authFetch } from '../authFetch';
 
@@ -205,6 +205,13 @@ const Invoices = () => {
                     </TableCell>
                     <TableCell className="text-right font-medium number-font">₹{invoice.finalTotal.toFixed(2)}</TableCell>
                     <TableCell className="text-right">
+                      <button
+                        onClick={() => navigate('/print-invoice', { state: { invoice } })}
+                        className="p-2 md:p-1.5 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 flex items-center justify-center text-primary/60 hover:text-primary hover:bg-primary/10 rounded-md transition-colors inline-flex mr-2"
+                        title="Print Invoice"
+                      >
+                        <Printer className="h-4 w-4" />
+                      </button>
                       <button
                         onClick={() => handleDelete(invoice)}
                         disabled={deletingId === invoice.id}
