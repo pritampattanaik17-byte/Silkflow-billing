@@ -23,6 +23,10 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const EmployeeDashboard = () => {
+  const storedUser = localStorage.getItem('user');
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const userName = user?.name ? user.name.split(' ')[0] : '';
+
   const navigate = useNavigate();
   const [billingFilter, setBillingFilter] = useState(new Date().toISOString().split('T')[0]);
   const location = useLocation();
@@ -49,8 +53,9 @@ const EmployeeDashboard = () => {
     const fetchEmployeeStats = async () => {
       try {
         setLoading(true);
-        const storedUser = localStorage.getItem('user');
-        const user = storedUser ? JSON.parse(storedUser) : null;
+        // User is already parsed at component level
+        
+
         
         let queryParams = billingFilter ? `?date=${billingFilter}` : '';
         if (user && user.id) {
@@ -82,7 +87,7 @@ const EmployeeDashboard = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-heading dark:text-white">Employee Dashboard</h1>
-          <p className="text-sm text-text dark:text-white/70 mt-1">Manage your billing and day-to-day operations.</p>
+          <p className="text-sm text-text dark:text-white/70 mt-1">Welcome back{userName ? `, ${userName}` : ''}, here's what's happening today.</p>
         </div>
         <div className="mt-4 sm:mt-0 w-full sm:w-auto">
           <Button className="w-full sm:w-auto" variant="primary" leftIcon={Plus} onClick={() => navigate('/invoices/new')}>

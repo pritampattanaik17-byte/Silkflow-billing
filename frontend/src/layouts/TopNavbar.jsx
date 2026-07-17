@@ -55,7 +55,7 @@ const TopNavbar = ({ user, onLogout, onMenuClick }) => {
           >
             <div className="px-4 py-2 border-b border-border dark:border-white/10">
               <p className="text-sm font-medium text-heading dark:text-white">{user?.name || 'User'}</p>
-              <p className="text-xs text-text dark:text-white/50">{user?.email || 'user@vastraflow.com'}</p>
+              <p className="text-xs text-text dark:text-white/50">{user?.email || 'user@stylebazar.com'}</p>
             </div>
             
             <DropdownItem icon={User}>{t('profile')}</DropdownItem>

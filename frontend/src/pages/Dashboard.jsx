@@ -22,6 +22,10 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const Dashboard = () => {
+  const storedUser = localStorage.getItem('user');
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const userName = user?.name ? user.name.split(' ')[0] : '';
+
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
   const location = useLocation();
   const navigate = useNavigate();
@@ -79,7 +83,7 @@ const Dashboard = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-heading dark:text-white">Dashboard</h1>
-          <p className="text-sm text-text dark:text-white/70 mt-1">Welcome back, here's what's happening today.</p>
+          <p className="text-sm text-text dark:text-white/70 mt-1">Welcome back{userName ? `, ${userName}` : ''}, here's what's happening today.</p>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Printer, ArrowLeft } from 'lucide-react';
 import Button from '../components/Button';
@@ -21,6 +21,14 @@ const PrintInvoice = () => {
   const navigate = useNavigate();
   const invoice = location.state?.invoice;
   const [isCanceling, setIsCanceling] = useState(false);
+
+  useEffect(() => {
+    const handleAfterPrint = () => {
+      navigate('/invoices');
+    };
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => window.removeEventListener('afterprint', handleAfterPrint);
+  }, [navigate]);
 
   if (!invoice) {
     return (
@@ -55,20 +63,7 @@ const PrintInvoice = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/50 p-2 sm:p-4 flex flex-col items-center print:p-0 print:bg-white">
-      <div className="w-full max-w-[148mm] mb-4 flex justify-between print:hidden">
-        <div className="flex space-x-2">
-          <Button variant="ghost" leftIcon={ArrowLeft} onClick={() => navigate('/invoices')} size="sm">
-            Back
-          </Button>
-          <Button variant="danger" onClick={handleCancel} disabled={isCanceling} size="sm">
-            {isCanceling ? 'Canceling...' : 'Cancel Invoice'}
-          </Button>
-        </div>
-        <Button variant="primary" leftIcon={Printer} onClick={() => window.print()} size="sm">
-          Print Invoice
-        </Button>
-      </div>
-      
+
       {/* A5 size wrapper: 148mm wide. Tightly packed. */}
       <div className="w-full max-w-[148mm] bg-white p-4 sm:p-6 shadow-sm border border-border rounded-none print:shadow-none print:border-none print:p-0">
         
@@ -77,13 +72,15 @@ const PrintInvoice = () => {
           <div>
             <div className="flex items-center space-x-2 mb-1">
               <div className="w-6 h-6 bg-accent rounded flex items-center justify-center font-bold text-primary text-sm">
-                S
+                B
               </div>
-              <span className="font-heading font-bold text-lg tracking-wide text-primary">SilkFlow</span>
+              <span className="font-heading font-bold text-[14px] tracking-wide text-primary">M/S BIJAYALAXMI STYLE BAZAR</span>
             </div>
             <div className="text-[9px] text-text leading-tight">
-              <p>Katargam, Surat, Gujarat 395004</p>
-              <p>GSTIN: 24AAACC1206D1Z1</p>
+              <p>KHATA NO - 116, PLOT NO - 1006, NAUGAON,</p>
+              <p>NAUGAONHAT, JAGATSINGHPUR, ODISHA</p>
+              <p>GSTIN/UIN: 21KBYPS2167D1Z7 (State: Odisha, Code: 21)</p>
+              <p>Contact: +91-9853332678</p>
             </div>
           </div>
           <div className="text-right">
@@ -187,10 +184,29 @@ const PrintInvoice = () => {
             </ul>
           </div>
           <div className="text-right flex flex-col justify-end min-w-[80px]">
-            <p className="text-heading font-semibold text-[9px] mb-4">For SilkFlow</p>
+            <p className="text-heading font-semibold text-[8px] mb-4 whitespace-nowrap overflow-visible">For M/S BIJAYALAXMI STYLE BAZAR</p>
             <p className="text-text text-[8px] border-t border-border/50 pt-0.5 inline-block">Authorized Signatory</p>
           </div>
         </div>
+
+        {/* System Generated Message */}
+        <div className="mt-4 text-center">
+          <p className="text-[8px] text-gray-500 italic">This is a system generated invoice.</p>
+        </div>
+      </div>
+
+      <div className="w-full max-w-[148mm] mt-4 flex justify-between print:hidden">
+        <div className="flex space-x-2">
+          <Button variant="ghost" leftIcon={ArrowLeft} onClick={() => navigate('/invoices')} size="sm">
+            Back
+          </Button>
+          <Button variant="danger" onClick={handleCancel} disabled={isCanceling} size="sm">
+            {isCanceling ? 'Canceling...' : 'Cancel Invoice'}
+          </Button>
+        </div>
+        <Button variant="primary" leftIcon={Printer} onClick={() => window.print()} size="sm">
+          Print Invoice
+        </Button>
       </div>
     </div>
   );

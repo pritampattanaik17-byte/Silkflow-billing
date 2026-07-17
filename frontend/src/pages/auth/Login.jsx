@@ -86,7 +86,7 @@ const Login = ({ onLogin }) => {
             <label className="block text-sm font-medium text-heading dark:text-white mb-1.5">Email address</label>
             <Input 
               type="email" 
-              placeholder="admin@vastraflow.com" 
+              placeholder="admin@stylebazar.com" 
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}

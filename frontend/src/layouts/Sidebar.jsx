@@ -54,9 +54,9 @@ const Sidebar = ({ user, isOpen, setIsOpen }) => {
         <div className="flex items-center h-16 flex-shrink-0 px-4 border-b border-white/10">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-accent rounded flex items-center justify-center font-bold text-primary">
-              V
+              B
             </div>
-            <span className="font-heading font-bold text-xl tracking-wide">VastraFlow</span>
+            <span className="font-heading font-bold text-[15px] tracking-wide">Bijayalaxmi Style Bazar</span>
           </div>
         </div>
         

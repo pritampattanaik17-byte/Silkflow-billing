@@ -1,6 +1,7 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { login, register, checkOwner } from '../controllers/authController.js';
+import { login, register, checkOwner, changePassword } from '../controllers/authController.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -26,5 +27,8 @@ const registerLimiter = rateLimit({
 router.post('/login', loginLimiter, login);
 router.post('/register', registerLimiter, register);
 router.get('/check-owner', checkOwner);
+
+// V13: Password change — requires authentication
+router.patch('/password', authenticate, loginLimiter, changePassword);
 
 export default router;

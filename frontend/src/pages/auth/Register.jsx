@@ -104,7 +104,7 @@ const Register = ({ onLogin }) => {
 
           <div>
             <label className="block text-sm font-medium text-heading dark:text-white mb-1.5">Email address</label>
-            <Input type="email" placeholder="admin@vastraflow.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input type="email" placeholder="admin@stylebazar.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
 
           <div>

@@ -81,9 +81,13 @@ const Reports = () => {
     csvRows.push(headers.join(','));
 
     data.reportData.forEach(row => {
+      // Format as DD/MM/YYYY and add a leading space so Excel treats it as text
+      const dateParts = row.date.split('-');
+      const formattedDate = dateParts.length === 3 ? ` ${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : ` ${row.date}`;
+      
       const csvRow = [
         `${row.id}`,
-        `${row.date}`,
+        `${formattedDate}`,
         `${row.gross}`
       ];
       csvRows.push(csvRow.join(','));

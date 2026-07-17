@@ -7,9 +7,9 @@ const AuthLayout = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex items-center justify-center space-x-2 mb-6">
           <div className="w-10 h-10 bg-accent rounded flex items-center justify-center font-bold text-primary text-xl">
-            V
+            B
           </div>
-          <span className="font-heading font-bold text-3xl tracking-wide text-primary">VastraFlow</span>
+          <span className="font-heading font-bold text-2xl tracking-wide text-primary">Bijayalaxmi Style Bazar</span>
         </div>
       </div>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">

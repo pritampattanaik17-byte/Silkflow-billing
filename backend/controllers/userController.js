@@ -1,4 +1,53 @@
 import prisma from '../lib/prisma.js';
+import bcrypt from 'bcrypt';
+import { registerSchema } from '../validators/authValidator.js';
+
+/**
+ * V13: Create an employee account (owner-only).
+ * This replaces the old public registration path for employees.
+ */
+export const createEmployee = async (req, res) => {
+  try {
+    const validationResult = registerSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(err => err.message).join(', ');
+      return res.status(400).json({ message: errorMessages });
+    }
+
+    const { name, email, password } = validationResult.data;
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(409).json({ message: 'An account with this email already exists.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: 'employee',
+        status: 'inactive',
+      },
+    });
+
+    res.status(201).json({
+      message: 'Employee account created successfully. Account is pending activation.',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      },
+    });
+  } catch (error) {
+    console.error('Create employee error:', process.env.NODE_ENV === 'production' ? error.message : error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
 // Get all employees (users with role 'employee')
 export const getEmployees = async (req, res) => {

@@ -1,54 +1,33 @@
 import prisma from '../lib/prisma.js';
 import { createInvoiceSchema } from '../validators/invoiceValidator.js';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const calculateItemTotal = (item) => {
+  const qty = parseInt(item.quantity, 10) || 1;
+  const fixed = parseFloat(item.fixedPrice) || 0;
+  const mrp = parseFloat(item.mrp) || 0;
+  const rate = fixed > 0 ? fixed : mrp;
+  const discount = parseFloat(item.discount) || 0;
+
+  let total = qty * rate;
+  if (item.discountType === '%') {
+    total = total - (total * (discount / 100));
+  } else {
+    total = total - discount;
+  }
+  return Math.max(0, Math.round(total * 100) / 100);
+};
 
 const getFinancialYear = () => {
   const now = new Date();
-  const month = now.getMonth(); // 0-indexed (0 = Jan, 3 = Apr)
   const year = now.getFullYear();
-  
-  // Indian FY: April (month 3) to March (month 2)
-  // If current month is Jan-Mar (0-2), FY started previous year
-  const fyStartYear = month >= 3 ? year : year - 1;
-  const fyEndYear = fyStartYear + 1;
-  
-  // Short form: 2026-2027 → "2627"
-  const startShort = String(fyStartYear).slice(2);
-  const endShort = String(fyEndYear).slice(2);
-  
-  return {
-    label: `FY${startShort}${endShort}`,       // "FY2627"
-    prefix: `SF/FY${startShort}${endShort}/`,   // "SF/FY2627/"
-  };
-};
-
-const generateInvoiceNumber = async () => {
-  const fy = getFinancialYear();
-  
-  // Find the latest invoice in this financial year
-  const lastInvoice = await prisma.invoice.findFirst({
-    where: {
-      invoiceNumber: { startsWith: fy.prefix }
-    },
-    orderBy: { invoiceNumber: 'desc' },
-    select: { invoiceNumber: true }
-  });
-  
-  let nextSeq = 1;
-  
-  if (lastInvoice) {
-    // Extract the sequence number from "SF/FY2627/0042" → 42
-    const parts = lastInvoice.invoiceNumber.split('/');
-    const lastSeq = parseInt(parts[parts.length - 1], 10);
-    if (!isNaN(lastSeq)) {
-      nextSeq = lastSeq + 1;
-    }
+  const month = now.getMonth() + 1;
+  if (month >= 4) {
+    return `${String(year).slice(-2)}${String(year + 1).slice(-2)}`;
+  } else {
+    return `${String(year - 1).slice(-2)}${String(year).slice(-2)}`;
   }
-  
-  // Zero-pad to 4 digits (supports up to 9999 invoices per FY)
-  const seqStr = String(nextSeq).padStart(4, '0');
-  
-  return `${fy.prefix}${seqStr}`;
 };
 
 export const createInvoice = async (req, res) => {
@@ -59,101 +38,79 @@ export const createInvoice = async (req, res) => {
       return res.status(400).json({ message: errorMessages });
     }
 
-    const { customerName, date, dueDate, items, subtotal, tax, finalTotal } = validationResult.data;
+    const { customerName, date, dueDate, items, tax } = validationResult.data;
 
-    // User identity comes from the verified JWT token, not the request body
+    const recalculatedItems = items.map(item => ({
+      ...item,
+      total: calculateItemTotal(item),
+    }));
+    const recalculatedSubtotal = recalculatedItems.reduce((sum, item) => sum + item.total, 0);
+    const recalculatedTax = parseFloat(tax) || 0;
+    const recalculatedFinalTotal = Math.round((recalculatedSubtotal + recalculatedTax) * 100) / 100;
+
     const createdById = req.user.id;
+    const financialYear = getFinancialYear();
+    const invoicePrefix = `SF/FY${financialYear}/`;
 
-    // Use a serializable transaction to prevent race conditions on invoice number generation
-    const MAX_RETRIES = 3;
-    let attempt = 0;
-    let invoice;
+    const invoice = await prisma.$transaction(async (tx) => {
+      let nextSeq = 1;
+      const lastInvoice = await tx.invoice.findFirst({
+        where: { invoiceNumber: { startsWith: invoicePrefix } },
+        orderBy: { invoiceNumber: 'desc' },
+      });
 
-    while (attempt < MAX_RETRIES) {
-      try {
-        invoice = await prisma.$transaction(async (tx) => {
-          // Generate sequential invoice number inside the transaction
-          const fy = getFinancialYear();
-          const lastInvoice = await tx.invoice.findFirst({
-            where: { invoiceNumber: { startsWith: fy.prefix } },
-            orderBy: { invoiceNumber: 'desc' },
-            select: { invoiceNumber: true }
-          });
-
-          let nextSeq = 1;
-          if (lastInvoice) {
-            const parts = lastInvoice.invoiceNumber.split('/');
-            const lastSeq = parseInt(parts[parts.length - 1], 10);
-            if (!isNaN(lastSeq)) {
-              nextSeq = lastSeq + 1;
-            }
-          }
-
-          const invoiceNumber = `${fy.prefix}${String(nextSeq).padStart(4, '0')}`;
-
-          return tx.invoice.create({
-            data: {
-              invoiceNumber,
-              customerName,
-              date: new Date(date),
-              dueDate: new Date(dueDate),
-              subtotal: parseFloat(subtotal),
-              tax: parseFloat(tax),
-              finalTotal: parseFloat(finalTotal),
-              status: 'paid',
-              createdById,
-              items: {
-                create: items.map(item => ({
-                  name: item.name,
-                  quantity: parseInt(item.quantity) || 1,
-                  mrp: parseFloat(item.mrp) || 0,
-                  fixedPrice: parseFloat(item.fixedPrice) || 0,
-                  discount: parseFloat(item.discount) || 0,
-                  discountType: item.discountType || '%',
-                  total: parseFloat(item.total) || 0
-                }))
-              }
-            },
-            include: {
-              items: true,
-              createdBy: {
-                select: { name: true }
-              }
-            }
-          });
-        }, {
-          isolationLevel: 'Serializable'
-        });
-
-        break; // Success — exit retry loop
-      } catch (txError) {
-        attempt++;
-        // P2002 = unique constraint violation (race condition on invoiceNumber)
-        if (txError.code === 'P2002' && attempt < MAX_RETRIES) {
-          continue; // Retry with next sequence number
+      if (lastInvoice) {
+        const lastSeq = parseInt(lastInvoice.invoiceNumber.replace(invoicePrefix, ''), 10);
+        if (!isNaN(lastSeq)) {
+          nextSeq = lastSeq + 1;
         }
-        throw txError; // Rethrow if not retryable or max retries exceeded
       }
-    }
+
+      const invoiceNumber = `${invoicePrefix}${String(nextSeq).padStart(4, '0')}`;
+
+      return tx.invoice.create({
+        data: {
+          invoiceNumber,
+          customerName,
+          date: new Date(date),
+          dueDate: new Date(dueDate),
+          subtotal: recalculatedSubtotal,
+          tax: recalculatedTax,
+          finalTotal: recalculatedFinalTotal,
+          status: 'paid',
+          createdById,
+          items: {
+            create: recalculatedItems.map(item => ({
+              name: item.name,
+              quantity: parseInt(item.quantity) || 1,
+              mrp: parseFloat(item.mrp) || 0,
+              fixedPrice: parseFloat(item.fixedPrice) || 0,
+              discount: parseFloat(item.discount) || 0,
+              discountType: item.discountType || '%',
+              total: item.total
+            }))
+          }
+        },
+        include: { items: true, createdBy: { select: { name: true } } }
+      });
+    }, {
+      isolationLevel: 'Serializable',
+      maxWait: 5000,
+      timeout: 10000
+    });
 
     res.status(201).json({ message: 'Invoice created successfully', invoice });
   } catch (error) {
+    if (error.code === 'P2002' && error.meta?.target?.includes('invoiceNumber')) {
+      return res.status(409).json({ message: 'A concurrent transaction created the same invoice number. Please try again.' });
+    }
     console.error('Create invoice error:', process.env.NODE_ENV === 'production' ? error.message : error);
-    res.status(500).json({ message: 'Internal server error while creating invoice' });
+    res.status(500).json({ message: 'Failed to create invoice' });
   }
 };
 
 export const getInvoices = async (req, res) => {
   try {
-    // Force no caching at the server level
-    res.set({
-      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0',
-      'Surrogate-Control': 'no-store'
-    });
-
-    // V3: Scope invoices by role — employees see only their own
     const filter = {};
     if (req.user.role === 'employee') {
       filter.createdById = req.user.id;
@@ -161,17 +118,18 @@ export const getInvoices = async (req, res) => {
 
     const invoices = await prisma.invoice.findMany({
       where: filter,
-      orderBy: { createdAt: 'desc' },
       include: {
         createdBy: {
           select: { name: true, role: true }
         }
-      }
+      },
+      orderBy: { date: 'desc' }
     });
+
     res.json(invoices);
   } catch (error) {
     console.error('Get invoices error:', process.env.NODE_ENV === 'production' ? error.message : error);
-    res.status(500).json({ message: 'Internal server error while fetching invoices' });
+    res.status(500).json({ message: 'Failed to fetch invoices' });
   }
 };
 
@@ -179,36 +137,19 @@ export const deleteInvoice = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // V7: Wrap all deletions in a transaction for atomicity
+    if (!UUID_RE.test(id)) {
+      return res.status(400).json({ message: 'Invalid invoice ID format.' });
+    }
+
     await prisma.$transaction(async (tx) => {
-      // First delete related invoice items
-      await tx.invoiceItem.deleteMany({
-        where: { invoiceId: id }
-      });
-
-      // Delete return items linked to returns of this invoice
-      const linkedReturns = await tx.return.findMany({
-        where: { originalInvoiceId: id },
-        select: { id: true }
-      });
-
-      for (const ret of linkedReturns) {
-        await tx.returnItem.deleteMany({ where: { returnId: ret.id } });
-      }
+      await tx.invoiceItem.deleteMany({ where: { invoiceId: id } });
       await tx.return.deleteMany({ where: { originalInvoiceId: id } });
-
-      // Finally delete the invoice itself
-      await tx.invoice.delete({
-        where: { id }
-      });
+      await tx.invoice.delete({ where: { id } });
     });
 
-    res.json({ message: 'Invoice deleted successfully' });
+    res.json({ message: 'Invoice deleted successfully.' });
   } catch (error) {
     console.error('Delete invoice error:', process.env.NODE_ENV === 'production' ? error.message : error);
-    if (error.code === 'P2025') {
-      return res.status(404).json({ message: 'Invoice not found' });
-    }
-    res.status(500).json({ message: 'Internal server error while deleting invoice' });
+    res.status(500).json({ message: 'Failed to delete invoice' });
   }
 };

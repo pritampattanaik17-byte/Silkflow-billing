@@ -94,13 +94,12 @@ const EmployeeManagement = () => {
     e.preventDefault();
     
     try {
-      const response = await authFetch('/auth/register', {
+      const response = await authFetch('/users', {
         method: 'POST',
         body: JSON.stringify({ 
           name: formData.name, 
           email: formData.email, 
           password: formData.password, 
-          role: 'employee' 
         }),
       });
 
@@ -301,7 +300,7 @@ const EmployeeManagement = () => {
                       required
                       type="email"
                       name="email"
-                      placeholder="employee@vastraflow.com"
+                      placeholder="employee@stylebazar.com"
                       className="pl-10 w-full"
                       value={formData.email}
                       onChange={handleInputChange}
